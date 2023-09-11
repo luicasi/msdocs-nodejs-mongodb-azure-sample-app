@@ -3,12 +3,14 @@ var express = require("express");
 var mongoose = require("mongoose");
 var path = require("path");
 var cookieParser = require("cookie-parser");
+const bodyParser = require('body-parser');
 var logger = require("morgan");
 const { format } = require("date-fns");
 
 // 1st party dependencies
-var configData = require("./config/connection");
-var indexRouter = require("./routes/index");
+const configData = require("./config/connection");
+const indexRouter = require("./routes/index");
+const upload = require('./routes/upload');
 
 async function getApp() {
 
@@ -28,12 +30,15 @@ async function getApp() {
   app.use(logger("dev"));
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
   app.use(express.static(path.join(__dirname, "public")));
 
   app.locals.format = format;
 
   app.use("/", indexRouter);
+  app.use('/upload', upload);
   app.use("/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
   app.use(
     "/css",
