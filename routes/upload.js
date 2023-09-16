@@ -33,9 +33,7 @@ router.post('/', uploadStrategy, (req, res) => {
     blobService.uploadStream(stream, streamLength)
     .then(
         ()=>{
-            res.render('success', { 
-                message: 'File uploaded to Azure Blob storage.' 
-            });
+            res.redirect('/');
         }
     ).catch(
         (err)=>{

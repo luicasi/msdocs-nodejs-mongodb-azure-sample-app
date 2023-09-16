@@ -7,13 +7,13 @@ const
     , config = require('../config')
 ;
 
-router.get('/upload_form', async(req, res, next) => {
+router.get('/', async(req, res) => {
   let viewData;
   try{
       const blobs = blobServiceClient.getContainerClient(containerName).listBlobsFlat()
       viewData = {
         title: 'Home',
-        viewName: 'index',
+        viewName: 'upload_form',
         accountName: config.getStorageAccountName(),
         containerName: containerName,
         thumbnails:[]
