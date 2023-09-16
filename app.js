@@ -13,6 +13,7 @@ hbs.registerHelper('dateFormat', require('handlebars-dateformat'));
 var configData = require("./config/connection");
 var indexRouter = require("./routes/index");
 var uploadForm = require("./routes/upload_form");
+const upload = require('./routes/upload');
 
 async function getApp() {
 
@@ -35,10 +36,9 @@ async function getApp() {
   app.use(cookieParser());
   app.use(express.static(path.join(__dirname, "public")));
 
-  //app.locals.format = format;
-
   app.use("/", indexRouter);
   app.use("/upload_form", uploadForm);
+  app.use('/upload', upload);
   app.use("/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
   app.use(
     "/css",
