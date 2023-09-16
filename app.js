@@ -1,16 +1,18 @@
 var createError = require("http-errors");
+var hbs = require('hbs');
 var express = require("express");
 var mongoose = require("mongoose");
 var path = require("path");
 var cookieParser = require("cookie-parser");
-const bodyParser = require('body-parser');
 var logger = require("morgan");
 const { format } = require("date-fns");
 
+hbs.registerHelper('dateFormat', require('handlebars-dateformat'));
+
+
 // 1st party dependencies
-const configData = require("./config/connection");
-const indexRouter = require("./routes/index");
-const upload = require('./routes/upload');
+var configData = require("./config/connection");
+var indexRouter = require("./routes/index");
 
 async function getApp() {
 
@@ -25,20 +27,17 @@ async function getApp() {
 
   // view engine setup
   app.set("views", path.join(__dirname, "views"));
-  app.set("view engine", "pug");
+  app.set("view engine", "hbs");
 
   app.use(logger("dev"));
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
   app.use(express.static(path.join(__dirname, "public")));
 
-  app.locals.format = format;
+  //app.locals.format = format;
 
   app.use("/", indexRouter);
-  app.use('/upload', upload);
   app.use("/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
   app.use(
     "/css",

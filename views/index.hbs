@@ -1,0 +1,55 @@
+<form action="./addTask" method="POST" class='form-registration'>
+  <div class='row my-3'>
+    <div class='col-md-2 align-bottom'>
+      <label for="taskName" class='fs-5'>New task</label>
+    </div>
+    <div class='col-md-8'>
+      <input class="form-control form-control-sm" type="text" name='taskName' placeholder="Enter new task here"/>
+    </div>
+    <div class='col-md-2 text-end'>
+      <button class='btn btn-success btn-sm' type='submit'>Add task</button>
+    </div>
+  </div>
+</form>
+
+
+<h5 class='my-2'>Current tasks</h5>
+<div class='row mb-3 border-bottom border-3'>
+    <div class='col-md-6 fw-bold'>Task</div>
+    <div class='col-md-2 fw-bold'>Created</div>
+    <div class='col-md-4 fw-bold'>Action</div>
+</div>
+
+{{#each this.currentTasks}}
+    <div class='row mb-2'>
+      <div class='col-sm-6'>{{taskName}}</div> 
+      <div class='col-sm-2'>{{dateFormat createDate "yyyy-MM-DD HH:mm"}}</div> 
+      <div class='col-sm-2'>
+        <form action='./completeTask' method='POST' class='form-registration'>
+          <input type='hidden' name='_id' value='{{_id}}'/>
+          <button class='btn btn-primary btn-sm mx-1' type='submit'>Complete</button> 
+        </form>
+      </div>
+      <div class='col-sm-2'>
+        <form action='./deleteTask' method='POST' class='form-registration'>
+          <input type='hidden' name='_id' value='{{_id}}'/>
+          <button class='btn btn-danger btn-sm mx-1'>Delete</button> 
+        </form>
+      </div>
+    </div>
+{{/each}}
+
+<h5 class='my-2'>Completed tasks</h5>
+<div class='row mb-3 border-bottom border-3'>
+    <div class='col-md-8 fw-bold'>Task</div>
+    <div class='col-md-2 fw-bold'>Created</div>
+    <div class='col-md-2 fw-bold'>Completed</div>
+</div>
+
+{{#each this.completedTasks}}
+    <div class='row mb-2'>
+      <div class='col-sm-8'>{{taskName}}</div> 
+      <div class='col-sm-2'>{{dateFormat createDate "yyyy-MM-DD HH:mm"}}</div> 
+      <div class='col-sm-2'>{{dateFormat completedDate "yyyy-MM-DD HH:mm"}}</div> 
+    </div>
+{{/each}}

@@ -1,7 +1,3 @@
-if (process.env.NODE_ENV !== 'production') {
-    require('dotenv').load();
-}
-
 const
       express = require('express')
     , router = express.Router()
@@ -10,9 +6,9 @@ const
     , inMemoryStorage = multer.memoryStorage()
     , uploadStrategy = multer({ storage: inMemoryStorage }).single('image')
 
-    , { BlockBlobClient } = require('@azure/storage-blob')
-    , getStream = require('into-stream')
+    , getStream = import('into-stream')
     , containerName = process.env.AZURE_STORAGE_CONTAINER_NAME
+    , { BlockBlobClient } = require('@azure/storage-blob')
 ;
 
 const handleError = (err, res) => {
