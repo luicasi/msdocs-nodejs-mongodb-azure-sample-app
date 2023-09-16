@@ -5,7 +5,6 @@ var mongoose = require("mongoose");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-const { format } = require("date-fns");
 
 hbs.registerHelper('dateFormat', require('handlebars-dateformat'));
 
