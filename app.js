@@ -12,6 +12,7 @@ hbs.registerHelper('dateFormat', require('handlebars-dateformat'));
 // 1st party dependencies
 var configData = require("./config/connection");
 var indexRouter = require("./routes/index");
+var uploadForm = require("./routes/upload_form");
 
 async function getApp() {
 
@@ -37,6 +38,7 @@ async function getApp() {
   //app.locals.format = format;
 
   app.use("/", indexRouter);
+  app.use("/upload_form", uploadForm);
   app.use("/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
   app.use(
     "/css",
