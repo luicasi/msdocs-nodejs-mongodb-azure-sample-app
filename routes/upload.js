@@ -6,7 +6,7 @@ const
     , inMemoryStorage = multer.memoryStorage()
     , uploadStrategy = multer({ storage: inMemoryStorage }).single('image')
 
-    , getStream = import('into-stream')
+    , getStream = require('into-stream')
     , containerName = process.env.AZURE_STORAGE_CONTAINER_NAME
     , { BlockBlobClient } = require('@azure/storage-blob')
 ;
