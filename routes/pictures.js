@@ -35,6 +35,10 @@ router.get('/', async(req, res) => {
   res.render(viewData.viewName, viewData);
 });
 
+router.get('/shoot', async(req, res) => {
+  res.render("shoot", {layout: false});
+});
+
 router.post('/delete', (req, res) => {
 
   const containerClient = blobServiceClient.getContainerClient(containerName);

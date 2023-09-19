@@ -1,0 +1,219 @@
+ <!doctype html>
+    
+    <head>
+        <style>
+        #video {
+            border: 1px solid black;
+            width: 320px;
+            height: 240px;
+        }
+    
+        #photo {
+            border: 1px solid black;
+            width: 320px;
+            height: 240px;
+        }
+    
+        #canvas {
+            display: none;
+        }
+    
+        .camera {
+            width: 340px;
+            display: inline-block;
+        }
+    
+        .output {
+            width: 340px;
+            display: inline-block;
+        }
+    
+        #startbutton {
+            display: block;
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            bottom: 36px;
+            padding: 5px;
+            background-color: #6a67ce;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 1.0);
+            cursor: pointer;
+        }
+    
+        .contentarea {
+            font-size: 16px;
+            font-family: Arial;
+            text-align: center;
+        }
+        </style>
+        <!--The title of the HTML document.-->
+        <title>Facial Image Recognition</title>
+    </head>
+    
+    <body>
+        <div class="contentarea">
+            <h1>Facial Image Recognition</h1>
+    
+            <div class="camera">
+                <video id="video">Video stream not available.</video>
+            </div>
+            <!--An id on a <button> tag assigns an identifier to the button.
+                The id allows JavaScript to easily access the <button> element
+                and manipulate it.
+                When a user clicks on the "Capture Image" button, the -->
+            <div>
+			<button id="startbutton">Capture Image</button>
+			<br/><br/>
+			<button id="uploadpicture">Upload</button>
+			</div>
+            
+            <!-- <div>
+            <a href="{% url 'facial-login-result' %}" id="startButton" 
+               class="btn btn-info btn-lg">
+               <span class="glyphicon glyphicon-camera"></span>Capture Image
+            </a>
+            </div> -->
+    
+            <!--The HTML canvas tag is where the image frames are stored
+                before they are converted into an image of proper format
+                to be shown using the <img> tag.-->
+            <canvas id="canvas"></canvas>
+    
+            <div class="output">
+                <img id="photo" alt="The image captured will appear in this box.">
+            </div>
+            <p><a href="/">Go to Home</a></p>
+        </div>
+    
+        <script>
+    
+        (function() {
+    
+            // We will scale the photo width to this.
+            var width = 320;
+            // The height will be computed based on the input stream.
+            var height = 0;
+    
+            var streaming = false;
+    
+            var video = null;
+            var canvas = null;
+            var photo = null;
+            var startbutton = null;
+			var uploadbutton = null;
+    
+            function startup() {
+                video = document.getElementById('video');
+                canvas = document.getElementById('canvas');
+                photo = document.getElementById('photo');
+                uploadbutton = document.getElementById('uploadpicture');
+    
+                /*The following line is executed when a user clicks on the
+                  "Capture Image" button.
+                  
+                  document.getElementById returns the element whose 'id'
+                  is 'startbutton'.*/
+                startbutton = document.getElementById('startbutton');
+    
+                // Access the video stream from the webcam.
+                navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                })
+                // Upon success, stream video in a video tag.
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.log("An error occurred: " + err);
+                });
+    
+                video.addEventListener('canplay', function(ev) {
+                    if (!streaming) {
+                        height = video.videoHeight / (video.videoWidth / width);
+    
+                        if (isNaN(height)) {
+                            height = width / (4 / 3);
+                        }
+    
+                        video.setAttribute('width', width);
+                        video.setAttribute('height', height);
+                        canvas.setAttribute('width', width);
+                        canvas.setAttribute('height', height);
+                        streaming = true;
+                    }
+                }, false);
+    
+                startbutton.addEventListener('click', function(ev) {
+                    takepicture();
+                    ev.preventDefault();
+                }, false);
+    
+                uploadbutton.addEventListener('click', function(ev) {
+                    canvas.toBlob(upload);
+                    ev.preventDefault();
+                }, false);
+    
+                clearphoto();
+            }
+    
+			function upload(blob) {
+				const form = new FormData();
+				form.append("image", blob, "pic.png")
+				fetch("/upload/shoot", {
+					method:'POST',
+					body:form,
+				}, )
+                .then(res => {
+                    if (res.ok) 
+                        location = "/pictures";
+                    else 
+                        alert(res.text());
+                    })
+                .catch(err => alert(err))
+			}	
+			
+            /*Collect the frames of the photo from the canvas and then
+              convert it into a PNG format, so that it can be shown in
+              the HTML page.*/
+            function clearphoto() {
+                var context = canvas.getContext('2d');
+                context.fillStyle = "#AAA";
+                context.fillRect(0, 0, canvas.width, canvas.height);
+    
+                var data = canvas.toDataURL('image/png');
+    
+                photo.setAttribute('src', data);
+            }
+    
+            /*Capture a frame from the video stream.*/
+            function takepicture() {
+                var context = canvas.getContext('2d');
+                if (width && height) {
+                    canvas.width = width;
+                    canvas.height = height;
+                    context.drawImage(video, 0, 0, width, height);
+    
+                    /*toDataURL('image/png') returns a data URL containing a
+                      representation of the image in PNG format.*/
+                    var data = canvas.toDataURL('image/png');
+    
+                    /*'src' is the name of the attribute whose value is to be set.
+                      'data' is a string containing the value to assign to the attribute.*/
+                    photo.setAttribute('src', data);
+                } else {
+                    clearphoto();
+                }
+            }
+    
+            /*The following code will call the startup() function when
+              the HTML page is loaded.*/
+            window.addEventListener('load', startup, false);
+        })();
+        </script>
+    </body>
+    
+    </html>

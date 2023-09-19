@@ -44,4 +44,30 @@ router.post('/', uploadStrategy, (req, res) => {
     })
 });
 
+router.post('/shoot', uploadStrategy, (req, res) => {
+
+    const
+          blobName = getBlobName(req.file.originalname)
+        , blobService = new BlockBlobClient(process.env.AZURE_STORAGE_CONNECTION_STRING,containerName,blobName)
+        , stream = getStream(req.file.buffer)
+        , streamLength = req.file.buffer.length
+    ;
+
+    blobService.uploadStream(stream, streamLength)
+    .then(
+        ()=>{
+            res.json({
+                status: true,
+                message: 'File is uploaded'
+            });
+        }
+    ).catch(
+        (err)=>{
+        if(err) {
+            res.status(500).json(err);
+            return;
+        }
+    })
+});
+
 module.exports = router;
