@@ -13,7 +13,7 @@ router.get('/', async(req, res) => {
       const blobs = blobServiceClient.getContainerClient(containerName).listBlobsFlat()
       viewData = {
         title: 'Home',
-        viewName: 'upload_form',
+        viewName: 'pictures',
         accountName: config.getStorageAccountName(),
         containerName: containerName,
         thumbnails:[]
@@ -35,6 +35,23 @@ router.get('/', async(req, res) => {
   res.render(viewData.viewName, viewData);
 });
 
+router.post('/delete', (req, res) => {
+
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+
+  containerClient.deleteBlob(req.body.file)
+  .then(
+      ()=>{
+          res.redirect('/pictures');
+      }
+  ).catch(
+      (err)=>{
+      if(err) {
+          handleError(err);
+          return;
+      }
+  })
+});
 
 
 module.exports = router;
