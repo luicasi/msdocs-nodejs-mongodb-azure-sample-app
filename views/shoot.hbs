@@ -1,17 +1,21 @@
  <!doctype html>
     
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> 
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/css/bootstrap-datepicker.css">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
         <style>
         #video {
             border: 1px solid black;
-            width: 320px;
-            height: 240px;
+            top: 0px;
+            left: 0px;
+            position: relative;
         }
     
         #photo {
             border: 1px solid black;
-            width: 320px;
-            height: 240px;
         }
     
         #canvas {
@@ -19,16 +23,14 @@
         }
     
         .camera {
-            width: 340px;
             display: inline-block;
         }
     
         .output {
-            width: 340px;
             display: inline-block;
         }
     
-        #startbutton {
+        #startbutton1 {
             display: block;
             position: relative;
             margin-left: auto;
@@ -56,43 +58,36 @@
         <div class="contentarea">
             <h1>Facial Image Recognition</h1>
     
-            <div class="camera">
-                <video id="video">Video stream not available.</video>
+            <div id="shooting" style="display: none;">
+                <div class="camera">
+                    <video id="video">Video stream not available.</video>
+                </div>
+                <div>
+                <button id="startbutton">Capture Image</button>
+                </div>
             </div>
-            <!--An id on a <button> tag assigns an identifier to the button.
-                The id allows JavaScript to easily access the <button> element
-                and manipulate it.
-                When a user clicks on the "Capture Image" button, the -->
-            <div>
-			<button id="startbutton">Capture Image</button>
-			<br/><br/>
-			<button id="uploadpicture">Upload</button>
-			</div>
-            
-            <!-- <div>
-            <a href="{% url 'facial-login-result' %}" id="startButton" 
-               class="btn btn-info btn-lg">
-               <span class="glyphicon glyphicon-camera"></span>Capture Image
-            </a>
-            </div> -->
-    
-            <!--The HTML canvas tag is where the image frames are stored
-                before they are converted into an image of proper format
-                to be shown using the <img> tag.-->
             <canvas id="canvas"></canvas>
     
-            <div class="output">
-                <img id="photo" alt="The image captured will appear in this box.">
+            <div id="uploading" style="display: none;">
+                <div class="output">
+                    <img id="photo" alt="The image captured will appear in this box.">
+                </div>
+                <br/>
+                <button id="uploadpicture">Upload this picture</button>
+                <button id="shootagain">Take another picture</button>
             </div>
-            <p><a href="/">Go to Home</a></p>
         </div>
     
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
         <script>
     
-        (function() {
-    
+            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+            const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
             // We will scale the photo width to this.
-            var width = 320;
+            var width = vw - 50;
             // The height will be computed based on the input stream.
             var height = 0;
     
@@ -101,25 +96,17 @@
             var video = null;
             var canvas = null;
             var photo = null;
-            var startbutton = null;
-			var uploadbutton = null;
     
             function startup() {
                 video = document.getElementById('video');
                 canvas = document.getElementById('canvas');
                 photo = document.getElementById('photo');
-                uploadbutton = document.getElementById('uploadpicture');
-    
-                /*The following line is executed when a user clicks on the
-                  "Capture Image" button.
-                  
-                  document.getElementById returns the element whose 'id'
-                  is 'startbutton'.*/
-                startbutton = document.getElementById('startbutton');
     
                 // Access the video stream from the webcam.
                 navigator.mediaDevices.getUserMedia({
-                    video: true,
+                    video: {
+                        facingMode: 'environment'
+                    },
                     audio: false
                 })
                 // Upon success, stream video in a video tag.
@@ -134,30 +121,39 @@
                 video.addEventListener('canplay', function(ev) {
                     if (!streaming) {
                         height = video.videoHeight / (video.videoWidth / width);
-    
+                        if (height > vh - 150){
+                            height = vh - 150;
+                            width = video.videoWidth / (video.videoHeight / height);
+                        }
+
                         if (isNaN(height)) {
                             height = width / (4 / 3);
                         }
     
-                        video.setAttribute('width', width);
-                        video.setAttribute('height', height);
-                        canvas.setAttribute('width', width);
-                        canvas.setAttribute('height', height);
+                        $(video).css('width', width);
+                        $(video).css('height', height);
+                        $(canvas).css('width', width);
+                        $(canvas).css('height', height);
                         streaming = true;
                     }
                 }, false);
     
-                startbutton.addEventListener('click', function(ev) {
+                $("#startbutton").on('click', function(ev) {
                     takepicture();
-                    ev.preventDefault();
-                }, false);
+                });
     
-                uploadbutton.addEventListener('click', function(ev) {
+                $("#uploadpicture").on('click', function(ev) {
                     canvas.toBlob(upload);
-                    ev.preventDefault();
-                }, false);
+                });
+    
+                $("#shootagain").on('click', function(ev) {
+                    clearphoto();
+                    $("#uploading").fadeOut(() => $("#shooting").fadeIn());
+                });
     
                 clearphoto();
+
+                $("#shooting").show();
             }
     
 			function upload(blob) {
@@ -204,15 +200,16 @@
                     /*'src' is the name of the attribute whose value is to be set.
                       'data' is a string containing the value to assign to the attribute.*/
                     photo.setAttribute('src', data);
+                    $("#shooting").fadeOut(() => $("#uploading").fadeIn());
+                    
                 } else {
                     clearphoto();
                 }
             }
-    
-            /*The following code will call the startup() function when
-              the HTML page is loaded.*/
-            window.addEventListener('load', startup, false);
-        })();
+
+            $(() => {
+                startup();
+            })
         </script>
     </body>
     
