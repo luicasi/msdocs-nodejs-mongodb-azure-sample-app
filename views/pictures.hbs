@@ -1,6 +1,7 @@
-<h1>Image Resizer</h1>
-
 <h2>Upload photos</h2>
+<hr>
+<p><a href="/pictures/shoot">Go to camera acquisition</a></p>
+<p><a href="/">Go to Home</a></p>
 <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
   <div class="upload-container">
     <label for="image">Select and image to upload: </label>
@@ -13,18 +14,13 @@
 
 <p id="message">{{message}}</p>
 
-<h2>Generated Thumbnails</h2>
 {{#each this.thumbnails}}
   <img src="https://{{../accountName}}.blob.core.windows.net/{{../containerName}}/{{name}}"  style="width:250px;">
   <br/>
   <form action="./pictures/delete" method="POST"><input type="hidden" name="file" value="{{name}}"/><input type="submit" Value="Delete picture"/></form>
-  <br/>
   <hr/>
 {{/each}}
 
-<hr>
-<p><a href="/pictures/shoot">Go to camera acquisition</a></p>
-<p><a href="/">Go to Home</a></p>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
 

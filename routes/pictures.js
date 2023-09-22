@@ -36,7 +36,7 @@ router.get('/', async(req, res) => {
 });
 
 router.get('/shoot', async(req, res) => {
-  res.render("shoot", {layout: false});
+  res.render("shoot");
 });
 
 router.post('/delete', (req, res) => {

@@ -40,9 +40,9 @@ async function getApp() {
   app.use("/", indexRouter);
   app.use("/pictures", pictures);
   app.use('/upload', upload);
-  app.use("/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
+  app.use("/bootstrap/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
   app.use(
-    "/css",
+    "/bootstrap/css",
     express.static(__dirname + "/node_modules/bootstrap/dist/css")
   ); // redirect CSS bootstrap
 
