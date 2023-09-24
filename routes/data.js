@@ -1,10 +1,50 @@
-var express = require('express');
+const
+      express = require('express')
+    , router = express.Router()
+
+    , multer = require('multer')
+    , inMemoryStorage = multer.memoryStorage()
+    , uploadStrategy = multer({ storage: inMemoryStorage }).single('file')
+
+    , getStream = require('into-stream')
+    , containerName = process.env.AZURE_STORAGE_CONTAINER_NAME
+    , { BlockBlobClient } = require('@azure/storage-blob')
+    , path = require('path')
+    , general = require('../config/general')
+    , dateFns = require("date-fns")
+;
+
 var Day = require('../models/day');
 
-var router = express.Router();
+router.get('/dates_list', async function(req, res, next) {
+    const opt = req.query.opt;
 
-/* GET home page. */
-router.get('/list', function(req, res, next) {
+    var data = [];
+
+    if (opt == undefined || opt == null || opt == "" || opt == "0" || opt == "1"){
+        const DataInizioAnno = new Date(2023, 8, 12);
+        var d = DataInizioAnno;
+        const oggi = Date.now();
+
+        while (d <= oggi){
+            if (d.getDay() != 0 && d.getDay() != 6){                
+                const dt = dateFns.format(d, "yyyyMMdd");
+                const day = await Day.findOne({ 'date': dt });
+                if (day){
+                    if (day.status == 1 || opt == "1"){
+                        data.push({date: dt, status: day.status});
+                    }
+                }
+                else {
+                    data.push({date: dt, status: 0});
+                }
+            }
+            d.setDate(d.getDate() + 1);
+        }
+        res.json({success: true, data: data});
+        return;
+    }
+
   Day.find()
     .then((days) => {      
       res.json({success: true, data: days});
@@ -15,11 +55,35 @@ router.get('/list', function(req, res, next) {
     });
 });
 
+router.get('/pictures_list', async function(req, res, next) {
+    const date = req.query.date;
+    const opt = req.query.opt;
+
+    var data = [];
+
+    const day = await Day.findOne({ 'date': date });
+    if (day){
+        for (const picture of day.pictures){
+            if (picture.status == 0 || opt == "1"){
+                data.push({name: picture.name, status: picture.status});
+            }
+        }
+    }
+    else {
+        res.json({success: false, message: "date not found [" + date + "]"});
+        return;
+    }
+
+    res.json({success: true, data: data});
+    return;
+});
 
 router.post('/add_not_working_day', function(req, res, next) {
   const date = req.body.date;
   const createdDate = Date.now();
   
+  //todo: verificare che la data non esista
+
   var day = new Day({
     date: date,
     status: 3,
@@ -41,7 +105,9 @@ router.post('/add_empty_day', function(req, res, next) {
     const date = req.body.date;
     const createdDate = Date.now();
     
-    var day = new Day({
+  //todo: verificare che la data non esista
+
+  var day = new Day({
       date: date,
       status: 4,
       createdDate: createdDate,
@@ -58,7 +124,7 @@ router.post('/add_empty_day', function(req, res, next) {
         });
   });
   
-  router.post('/add_picture', function(req, res, next) {
+  router.post('/add_picture', uploadStrategy, function(req, res, next) {
     const date = req.body.date;
     const createdDate = Date.now();
     
@@ -83,16 +149,32 @@ router.post('/add_empty_day', function(req, res, next) {
                 createdDate: createdDate
             });                    
         }
-        day.pictures.push({name: date + "_" + index, status: 0});
 
-        day.save()
-        .then(() => { 
-            console.log(`Saved day ${date}`)
-            res.json({success: true}); })
-          .catch((err) => {
-              console.log(err);
-              res.json({success: false, message: err.Description});
-          });      
+        const name = date + "_" + index + path.extname(req.file.originalname);
+        const
+            blobService = new BlockBlobClient(process.env.AZURE_STORAGE_CONNECTION_STRING, containerName, name)
+            , stream = getStream(req.file.buffer)
+            , streamLength = req.file.buffer.length
+        ;
+
+        blobService.uploadStream(stream, streamLength)
+        .then(
+            ()=>{
+                day.pictures.push({name: name, status: 0});
+
+                day.save()
+                .then(() => { 
+                    console.log(`Saved day ${date}`)
+                    res.json({success: true}); })
+                  .catch((err) => {
+                      console.log(err);
+                      res.json({success: false, message: err.Description});
+                  });      
+                    })
+            .catch((err) => {
+                console.log(err);
+                res.json({success: false, message: err.Description});
+            });      
     })
     .catch((err) => {
         console.log(err);
@@ -157,4 +239,18 @@ router.post('/set_picture_done', function(req, res, next) {
     });
 });
 
+router.post('/delete_date', function(req, res, next) {
+    const dayId = req.body._id;
+    const completedDate = Date.now();
+    Day.findByIdAndDelete(dayId)
+      .then(() => { 
+        console.log(`Deleted day $(dayId)`)      
+        res.json({success: true}); })
+      .catch((err) => {
+        console.log(err);
+        res.json({success: false, message: err.Description});
+      });
+  });
+  
+  
 module.exports = router;
