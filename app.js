@@ -15,6 +15,7 @@ var configData = require("./config/connection");
 var indexRouter = require("./routes/index");
 var pictures = require("./routes/pictures");
 const upload = require('./routes/upload');
+const data = require('./routes/data');
 
 async function getApp() {
 
@@ -40,6 +41,7 @@ async function getApp() {
   app.use("/", indexRouter);
   app.use("/pictures", pictures);
   app.use('/upload', upload);
+  app.use('/data', data);
   app.use("/bootstrap/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
   app.use(
     "/bootstrap/css",
