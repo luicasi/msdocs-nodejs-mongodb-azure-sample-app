@@ -51,7 +51,7 @@ router.get('/dates_list', async function(req, res, next) {
     })
     .catch((err) => {
       console.log(err);
-      res.json({success: false, message: err.Description});
+      res.json({success: false, message: err.message});
     });
 });
 
@@ -97,7 +97,7 @@ router.post('/add_not_working_day', function(req, res, next) {
         res.json({success: true}); })
       .catch((err) => {
           console.log(err);
-          res.json({success: false, message: err.Description});
+          res.json({success: false, message: err.message});
       });
 });
 
@@ -120,7 +120,7 @@ router.post('/add_empty_day', function(req, res, next) {
           res.json({success: true}); })
         .catch((err) => {
             console.log(err);
-            res.json({success: false, message: err.Description});
+            res.json({success: false, message: err.message});
         });
   });
   
@@ -150,6 +150,8 @@ router.post('/add_empty_day', function(req, res, next) {
             });                    
         }
 
+        console.log(req.file);
+
         const name = date + "_" + index + path.extname(req.file.originalname);
         const
             blobService = new BlockBlobClient(process.env.AZURE_STORAGE_CONNECTION_STRING, containerName, name)
@@ -168,17 +170,17 @@ router.post('/add_empty_day', function(req, res, next) {
                     res.json({success: true}); })
                   .catch((err) => {
                       console.log(err);
-                      res.json({success: false, message: err.Description});
+                      res.json({success: false, message: err.message});
                   });      
                     })
             .catch((err) => {
                 console.log(err);
-                res.json({success: false, message: err.Description});
+                res.json({success: false, message: err.message});
             });      
     })
     .catch((err) => {
         console.log(err);
-        res.json({success: false, message: err.Description});
+        res.json({success: false, message: err.message});
     });
 });
 
@@ -230,12 +232,12 @@ router.post('/set_picture_done', function(req, res, next) {
             res.json({success: true}); })
           .catch((err) => {
               console.log(err);
-              res.json({success: false, message: err.Description});
+              res.json({success: false, message: err.message});
           });      
     })
     .catch((err) => {
         console.log(err);
-        res.json({success: false, message: err.Description});
+        res.json({success: false, message: err.message});
     });
 });
 
@@ -248,7 +250,7 @@ router.post('/delete_date', function(req, res, next) {
         res.json({success: true}); })
       .catch((err) => {
         console.log(err);
-        res.json({success: false, message: err.Description});
+        res.json({success: false, message: err.message});
       });
   });
   
