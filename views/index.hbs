@@ -25,6 +25,7 @@ function loadDataCB(sentData, retData)
     setVisible($("button[name=bt4]", i).closest("div"), item.status == 0);
 
     $("button", i).on("click", onButtonClick);
+    $(i).on("click", onDateClick);
 	});	
   
 }
@@ -43,6 +44,10 @@ function onButtonClick() {
   var item = div.data("data");
 
   alert(formatDate(item.date) + "\n" + $(this).text());
+}
+
+function onDateClick() {
+  $(this).toggleClass("open");
 }
 
 $(function() {
