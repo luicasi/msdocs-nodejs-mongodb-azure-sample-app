@@ -1,111 +1,356 @@
 <script type="text/javascript">
 var currentDate;
 
-function loadData() 
-{	
-	ajaxCall2("/data/dates_list", {}, loadDataCB);
-}
-
-function loadDataCB(sentData, retData) 
-{	
-	var cnt = $("#data-cnt");
-	clearContent(cnt);
-	
-	$.each(retData.data, function(index, item) {
-		var i = createFromTemplate(cnt);
-		i.data("data", item);
-		$("span[name=data]", i).text(formatDate(item.date));
-    if (item.status == 0){
-  		$("span[name=testo]", i).text("Nessuna immagine");
-    }
-    else if (item.status == 1){
-  		$("span[name=testo]", i).text("Immagini da lavorare");
-    }
-    setVisible($("button[name=bt1]", i).closest("div"), true);
-    setVisible($("button[name=bt2]", i).closest("div"), item.status == 1);
-    setVisible($("button[name=bt3]", i).closest("div"), item.status == 0);
-    setVisible($("button[name=bt4]", i).closest("div"), item.status == 0);
-
-    $("button", i).on("click", onButtonClick);
-    $(i).on("click", onDateClick);
-	});	
-  
-  showPage("main")
-}
-
-function formatDate(d) 
-{
-	var ret = "";
-	var d1 = d.split("-");
-	var d2 = new Date(parseInt(d.substr(0, 4), 10), parseInt(d.substr(4, 2), 10) - 1, parseInt(d.substr(6, 2), 10), 0, 0, 0);
-	
-	return Date.Format(d2, "dddd dd/mm");		
-}
-
-function onButtonClick() {
-  var div = $(this).closest("div.data");
-  var item = div.data("data");
-
-  $(this).toggleClass("open");
-
-  if ($(this).attr("name") == "bt1"){
-    showShoot(item.date);
+var app = (() => {
+  function showPage(page) {
+    $("div[page]").each((index, element) => {
+      if ($(element).attr("page") != page){
+        $(element).hide();
+      }
+    })
+    $("div[page='" + page +"']").show();
   }
-  else if ($(this).attr("name") == "bt2"){
-    showPictures(item.date);
-  }
-  else {
-    alert(formatDate(item.date) + "\n" + $(this).text());
-  }
-}
 
-function onDateClick() {
-  if ($(this).is(".open"))
+  function formatDate(d) 
   {
-    $(this).removeClass("open");
+    var ret = "";
+    var d2 = new Date(parseInt(d.substr(0, 4), 10), parseInt(d.substr(4, 2), 10) - 1, parseInt(d.substr(6, 2), 10), 0, 0, 0);
+    
+    return Date.Format(d2, "dddd dd/mm");		
   }
-  else {
-    $("div.data.open", "div[page=main]").removeClass("open");
+
+  return {
+    showPage: showPage,
+    formatDate: formatDate
+  }
+
+})();
+
+var main = (() => {
+  function init() {
+
+  }
+
+  function show(bLoadData) {
+    if (bLoadData) {
+      loadData(); 
+    }
+    else {
+      app.showPage("main");
+    }
+  }
+
+  function loadData() 
+  {	
+    ajaxCall2("/data/dates_list", {}, loadDataCB);
+  }
+
+  function loadDataCB(sentData, retData) 
+  {	
+    var cnt = $("div[name=data-cnt]");
+    clearContent(cnt);
+    
+    $.each(retData.data, function(index, item) {
+      var i = createFromTemplate(cnt);
+      i.data("data", item);
+      $("span[name=data]", i).text(app.formatDate(item.date));
+      if (item.status == 0){
+        $("span[name=testo]", i).text("Nessuna immagine");
+      }
+      else if (item.status == 1){
+        $("span[name=testo]", i).text("Immagini da lavorare");
+      }
+      setVisible($("button[name=bt1]", i).closest("div"), true);
+      setVisible($("button[name=bt2]", i).closest("div"), item.status == 1);
+      setVisible($("button[name=bt3]", i).closest("div"), item.status == 0);
+      setVisible($("button[name=bt4]", i).closest("div"), item.status == 0);
+
+      $("button", i).on("click", onButtonClick);
+      $(i).on("click", onDateClick);
+    });	
+    
+    app.showPage("main")
+  }
+
+
+  function onButtonClick() {
+    var div = $(this).closest("div.data");
+    var item = div.data("data");
+
     $(this).toggleClass("open");
+
+    if ($(this).attr("name") == "bt1"){
+      showShoot(item.date);
+    }
+    else if ($(this).attr("name") == "bt2"){
+      showPictures(item.date);
+    }
+    else {
+      alert(app.formatDate(item.date) + "\n" + $(this).text());
+    }
   }
-}
+
+  function onDateClick() {
+    if ($(this).is(".open"))
+    {
+      $(this).removeClass("open");
+    }
+    else {
+      $("div.data.open", "div[page=main]").removeClass("open");
+      $(this).toggleClass("open");
+    }
+  }
+
+
+  return {
+    init: init,
+    show: show
+  }
+})();
+
+var pictures = (() => {
+
+  var currentDate;
+  var cnt;
+
+  function init() {
+    cnt = $("div[page=pictures]");
+
+    $("a[name=home]", cnt).on("click", () => main.show(true))
+    $("a[name=shoot]", cnt).on("click", () => app.showPage("shoot"))
+  }
+
+  function show(dt) {
+    currentDate = dt;
+    $("span[name=date]", cnt).text(app.formatDate(currentDate));
+    loadData();
+  }
+
+  function loadData() 
+  {	
+    ajaxCall2("/data/pictures_list", {date: currentDate}, loadDataCB);
+  }
+
+  function loadDataCB(sentData, retData) 
+  {	
+    var cntPics = $("div[name=pictures-cnt]", cnt);
+    clearContent(cntPics);
+    
+    $.each(retData.data, function(index, item) {
+      var i = createFromTemplate(cntPics);
+      i.data("data", item);
+      $("img", i).attr("src", `https://${item.accountName}.blob.core.windows.net/${item.containerName}/${item.name}`);
+
+      $("button[name=done]", i).on("click", onDoneClick);
+    });	
+    
+    app.showPage("pictures")
+  }
+
+  function onDoneClick() {
+    var item = $(this.closest(".item"));
+    var data = item.data("data");
+
+    fetch("/data/set_picture_done", {
+      method:'POST',
+      body:new URLSearchParams({
+        'date': currentDate,
+        'name': data.name
+    })})
+    .then(res => {
+        if (res.ok) 
+            item.remove();
+        else 
+            alert(res.text());
+        })
+    .catch(err => alert(err.message))
+  }
+
+  return {
+    init: init,
+    show: show
+  }
+})();
+
+var shoot = (() => {
+
+  var currentDate;
+  var cnt;
+
+  function init() {
+    cnt = $("div[page=shoot]");
+
+    $("a[name=home]", cnt).on("click", () => main.show(true))
+    $("a[name=pictures]", cnt).on("click", () => app.showPage("pictures"))
+
+    startup();
+  }
+
+  function show(dt) {
+    currentDate = dt;
+    $("span[name=date]", cnt).text(app.formatDate(currentDate));
+    app.showPage("shoot");
+  }
+
+    
+  const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+  const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
+  // We will scale the photo width to this.
+  var width = vw - 50;
+  // The height will be computed based on the input stream.
+  var height = 0;
+
+  var streaming = false;
+
+  var video = null;
+  var canvas = null;
+  var photo = null;
+
+  function startup() {
+      video = document.getElementById('video');
+      canvas = document.getElementById('canvas');
+      photo = document.getElementById('photo');
+
+      // Access the video stream from the webcam.
+      navigator.mediaDevices.getUserMedia({
+          video: {
+              facingMode: 'environment'
+          },
+          audio: false
+      })
+      // Upon success, stream video in a video tag.
+      .then(function(stream) {
+          video.srcObject = stream;
+          video.play();
+      })
+      .catch(function(err) {
+          console.log("An error occurred: " + err);
+      });
+
+      video.addEventListener('canplay', function(ev) {
+          if (!streaming) {
+              height = video.videoHeight / (video.videoWidth / width);
+              if (height > vh - 150){
+                  height = vh - 150;
+                  width = video.videoWidth / (video.videoHeight / height);
+              }
+
+              if (isNaN(height)) {
+                  height = width / (4 / 3);
+              }
+
+              $(video).css('width', width);
+              $(video).css('height', height);
+              $(canvas).css('width', width);
+              $(canvas).css('height', height);
+              streaming = true;
+          }
+      }, false);
+
+      $("#startbutton").on('click', function(ev) {
+          takepicture();
+      });
+
+      $("#uploadpicture").on('click', function(ev) {
+          canvas.toBlob(upload);
+      });
+
+      $("#shootagain").on('click', function(ev) {
+          clearphoto();
+          $("#uploading").fadeOut(() => $("#shooting").fadeIn());
+      });
+
+      clearphoto();
+
+      $("#shooting").show();
+  }
+    
+  function upload(blob) {
+    const form = new FormData();
+    form.append("date", currentDate);
+    form.append("file", blob, "pic.png")
+    fetch("data/add_picture", {
+      method:'POST',
+      body:form,
+    }, )
+    .then(res => {
+        if (res.ok) 
+            alert("Immagine salvata");
+        else 
+            alert(res.text());
+        })
+    .catch(err => alert(err))
+  }	
+			
+  /*Collect the frames of the photo from the canvas and then
+    convert it into a PNG format, so that it can be shown in
+    the HTML page.*/
+  function clearphoto() {
+      var context = canvas.getContext('2d');
+      context.fillStyle = "#AAA";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      var data = canvas.toDataURL('image/png');
+
+      photo.setAttribute('src', data);
+  }
+
+  /*Capture a frame from the video stream.*/
+  function takepicture() {
+      var context = canvas.getContext('2d');
+      if (width && height) {
+          canvas.width = width;
+          canvas.height = height;
+          context.drawImage(video, 0, 0, width, height);
+
+          /*toDataURL('image/png') returns a data URL containing a
+            representation of the image in PNG format.*/
+          var data = canvas.toDataURL('image/png');
+
+          /*'src' is the name of the attribute whose value is to be set.
+            'data' is a string containing the value to assign to the attribute.*/
+          photo.setAttribute('src', data);
+          $("#shooting").fadeOut(() => $("#uploading").fadeIn());
+          
+      } else {
+          clearphoto();
+      }
+  }
+
+
+  return {
+    init: init,
+    show: show
+  }
+})();
 
 function showPictures(dt){
-  currentDate = dt;
-  showPage("pictures");
-  $("span[name=date]", "div[page=pictures]").text(formatDate(currentDate));
+  pictures.show(dt);
 }
 
 function showShoot(dt){
-  currentDate = dt;
-  showPage("shoot");
-  $("span[name=date]", "div[page=shoot]").text(formatDate(currentDate));
-}
-
-function showPage(page) {
-  $("div[page]").each((index, element) => {
-    if ($(element).attr("page") != page){
-      $(element).hide();
-    }
-  })
-  $("div[page='" + page +"']").show();
+  shoot.show(dt);
 }
 
 $(function() {
-  $("a[name=home]", "div[page=pictures]").on("click", () => showPage("main"))
-  $("a[name=shoot]", "div[page=pictures]").on("click", () => showPage("shoot"))
-  $("a[name=home]", "div[page=shoot]").on("click", () => showPage("main"))
-  $("a[name=pictures]", "div[page=shoot]").on("click", () => showPage("pictures"))
+  main.init();
+  pictures.init();
+  shoot.init();
 
-  loadData();
-  showPage("loading")
+  app.showPage("loading")
+
+  main.show(true);
 });
+
 </script>
+
 <div page="loading" style="text-align: center; padding: 20px; ">
   <h3>Avvio applicazione...</h3>
 </div>
+
 <div page="main">
-  <div id="data-cnt" class="eventi" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
+  <div name="data-cnt" class="eventi" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
     <div class="template data" style="flex-grow: 1.5; ">
       <span name="data" style="font-weight: bold; "></span>
       <br/>
@@ -118,13 +363,39 @@ $(function() {
     </div>
   </div>
 </div>
+
 <div page="pictures" style="margin: 10px; ">
-  Data: <span name="date"></span> <a name="home" href="javascript: void(0);">Home</a> <a name="shoot" href="javascript: void(0);">Scatta una foto</a>
+  Data: <span name="date"></span> &nbsp;&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a> &nbsp;&nbsp;&nbsp; <a name="shoot" href="javascript: void(0);">[Scatta una foto]</a>
   <hr/>
-  <div name="pictures-cnt">Immagini</div>
+  <div name="pictures-cnt" style="text-align: center; ">
+    <div class="template item">
+      <img style="width:250px;">
+      <br/>
+      <button name="done" style="font-weight: bold; font-size: 12pt; padding: 5px; border-radius: 7px; background-color: #FFFFFF; ">Gestita</button>
+    </div>
+  <br/>
+  </div>
 </div>
+
 <div page="shoot" style="margin: 10px; ">
-  Data: <span name="date"></span> <a name="home" href="javascript: void(0);">Home</a> <a name="pictures" href="javascript: void(0);">Immagini</a>
+  Data: <span name="date"></span> &nbsp;&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a> &nbsp;&nbsp;&nbsp; <a name="pictures" href="javascript: void(0);">[Immagini]</a>
   <hr/>
-  <div name="pictures-cnt">Shoot</div>
+  <div id="shooting" style="display: none;">
+      <div class="camera">
+          <video id="video">Video stream not available.</video>
+      </div>
+      <div>
+      <button id="startbutton">Capture Image</button>
+      </div>
+  </div>
+  <canvas id="canvas" style="display: none; "></canvas>
+
+  <div id="uploading" style="display: none;">
+      <div class="output">
+          <img id="photo" alt="The image captured will appear in this box.">
+      </div>
+      <br/>
+      <button id="uploadpicture">Upload this picture</button>
+      <button id="shootagain">Take another picture</button>
+  </div>
 </div>

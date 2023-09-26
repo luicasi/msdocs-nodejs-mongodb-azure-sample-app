@@ -12,6 +12,7 @@ const
     , path = require('path')
     , general = require('../config/general')
     , dateFns = require("date-fns")
+    , config = require('../config')
 ;
 
 var Day = require('../models/day');
@@ -65,7 +66,7 @@ router.get('/pictures_list', async function(req, res, next) {
     if (day){
         for (const picture of day.pictures){
             if (picture.status == 0 || opt == "1"){
-                data.push({name: picture.name, status: picture.status});
+                data.push({name: picture.name, accountName: config.getStorageAccountName(), containerName: containerName, status: picture.status});
             }
         }
     }
