@@ -190,6 +190,9 @@ var shoot = (() => {
     currentDate = dt;
     $("span[name=date]", cnt).text(app.formatDate(currentDate));
     app.showPage("shoot");
+
+    clearphoto();
+    $("#shooting").show();
   }
 
     
