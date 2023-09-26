@@ -1,4 +1,6 @@
 <script type="text/javascript">
+var currentDate;
+
 function loadData() 
 {	
 	ajaxCall2("/data/dates_list", {}, loadDataCB);
@@ -28,6 +30,7 @@ function loadDataCB(sentData, retData)
     $(i).on("click", onDateClick);
 	});	
   
+  showPage("main")
 }
 
 function formatDate(d) 
@@ -43,17 +46,64 @@ function onButtonClick() {
   var div = $(this).closest("div.data");
   var item = div.data("data");
 
-  alert(formatDate(item.date) + "\n" + $(this).text());
+  $(this).toggleClass("open");
+
+  if ($(this).attr("name") == "bt1"){
+    showShoot(item.date);
+  }
+  else if ($(this).attr("name") == "bt2"){
+    showPictures(item.date);
+  }
+  else {
+    alert(formatDate(item.date) + "\n" + $(this).text());
+  }
 }
 
 function onDateClick() {
-  $(this).toggleClass("open");
+  if ($(this).is(".open"))
+  {
+    $(this).removeClass("open");
+  }
+  else {
+    $("div.data.open", "div[page=main]").removeClass("open");
+    $(this).toggleClass("open");
+  }
+}
+
+function showPictures(dt){
+  currentDate = dt;
+  showPage("pictures");
+  $("span[name=date]", "div[page=pictures]").text(formatDate(currentDate));
+}
+
+function showShoot(dt){
+  currentDate = dt;
+  showPage("shoot");
+  $("span[name=date]", "div[page=shoot]").text(formatDate(currentDate));
+}
+
+function showPage(page) {
+  $("div[page]").each((index, element) => {
+    if ($(element).attr("page") != page){
+      $(element).hide();
+    }
+  })
+  $("div[page='" + page +"']").show();
 }
 
 $(function() {
+  $("a[name=home]", "div[page=pictures]").on("click", () => showPage("main"))
+  $("a[name=shoot]", "div[page=pictures]").on("click", () => showPage("shoot"))
+  $("a[name=home]", "div[page=shoot]").on("click", () => showPage("main"))
+  $("a[name=pictures]", "div[page=shoot]").on("click", () => showPage("pictures"))
+
   loadData();
+  showPage("loading")
 });
 </script>
+<div page="loading" style="text-align: center; padding: 20px; ">
+  <h3>Avvio applicazione...</h3>
+</div>
 <div page="main">
   <div id="data-cnt" class="eventi" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
     <div class="template data" style="flex-grow: 1.5; ">
@@ -67,4 +117,14 @@ $(function() {
       <div><button name="bt4">Nessuna immagine per questo giorno</button><br/></div>
     </div>
   </div>
+</div>
+<div page="pictures" style="margin: 10px; ">
+  Data: <span name="date"></span> <a name="home" href="javascript: void(0);">Home</a> <a name="shoot" href="javascript: void(0);">Scatta una foto</a>
+  <hr/>
+  <div name="pictures-cnt">Immagini</div>
+</div>
+<div page="shoot" style="margin: 10px; ">
+  Data: <span name="date"></span> <a name="home" href="javascript: void(0);">Home</a> <a name="pictures" href="javascript: void(0);">Immagini</a>
+  <hr/>
+  <div name="pictures-cnt">Shoot</div>
 </div>
