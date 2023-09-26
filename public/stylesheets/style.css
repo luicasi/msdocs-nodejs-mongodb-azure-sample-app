@@ -1,5 +1,5 @@
 body {
-  padding: 50px;
+  padding: 10px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
@@ -34,6 +34,17 @@ div.data.open {
 }
 
 div.data button {
+  width: 90%;
+  height: 40px;
+  text-align: center;
+  vertical-align: middle;
+  margin: 5px; 
+  border-radius: 7px;
+  background-color: #FFFFFF; 
+}
+
+div[page=shoot] button {
+  width: 90%;
   height: 40px;
   text-align: center;
   vertical-align: middle;

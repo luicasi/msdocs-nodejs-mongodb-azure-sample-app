@@ -33,11 +33,11 @@ router.get('/dates_list', async function(req, res, next) {
                 const day = await Day.findOne({ 'date': dt });
                 if (day){
                     if (day.status == 1 || opt == "1"){
-                        data.push({date: dt, status: day.status});
+                        data.push({date: dt, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length});
                     }
                 }
                 else {
-                    data.push({date: dt, status: 0});
+                    data.push({date: dt, status: 0, openPictures: 0, closedPictures: 0});
                 }
             }
             d.setDate(d.getDate() + 1);

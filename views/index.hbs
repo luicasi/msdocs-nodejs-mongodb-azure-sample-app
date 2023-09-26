@@ -58,7 +58,7 @@ var main = (() => {
         $("span[name=testo]", i).text("Nessuna immagine");
       }
       else if (item.status == 1){
-        $("span[name=testo]", i).text("Immagini da lavorare");
+        $("span[name=testo]", i).text(`${item.openPictures} immagini da lavorare su ${item.totalPictures}`);
       }
       setVisible($("button[name=bt1]", i).closest("div"), true);
       setVisible($("button[name=bt2]", i).closest("div"), item.status == 1);
@@ -368,7 +368,7 @@ $(function() {
 </div>
 
 <div page="pictures" style="margin: 10px; ">
-  Data: <span name="date"></span> &nbsp;&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a> &nbsp;&nbsp;&nbsp; <a name="shoot" href="javascript: void(0);">[Scatta una foto]</a>
+  <span name="date" style="font-weight: bold; font-size: 12pt; "></span> &nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a> &nbsp;&nbsp; <a name="shoot" href="javascript: void(0);">[Scatta una foto]</a>
   <hr/>
   <div name="pictures-cnt" style="text-align: center; ">
     <div class="template item">
@@ -381,7 +381,7 @@ $(function() {
 </div>
 
 <div page="shoot" style="margin: 10px; ">
-  Data: <span name="date"></span> &nbsp;&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a> &nbsp;&nbsp;&nbsp; <a name="pictures" href="javascript: void(0);">[Immagini]</a>
+  <span name="date" style="font-weight: bold; font-size: 12pt; "></span> &nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a> &nbsp;&nbsp; <a name="pictures" href="javascript: void(0);">[Immagini]</a>
   <hr/>
   <div id="shooting" style="display: none;">
       <div class="camera">
