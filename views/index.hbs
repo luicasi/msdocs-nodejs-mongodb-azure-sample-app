@@ -117,7 +117,7 @@ var pictures = (() => {
     cnt = $("div[page=pictures]");
 
     $("a[name=home]", cnt).on("click", () => main.show(true))
-    $("a[name=shoot]", cnt).on("click", () => app.showPage("shoot"))
+    $("a[name=shoot]", cnt).on("click", () => shoot.show(currentDate))
   }
 
   function show(dt) {
@@ -181,7 +181,7 @@ var shoot = (() => {
     cnt = $("div[page=shoot]");
 
     $("a[name=home]", cnt).on("click", () => main.show(true))
-    $("a[name=pictures]", cnt).on("click", () => app.showPage("pictures"))
+    $("a[name=pictures]", cnt).on("click", () => pictures.show(currentDate))
 
     startup();
   }
@@ -231,8 +231,8 @@ var shoot = (() => {
       video.addEventListener('canplay', function(ev) {
           if (!streaming) {
               height = video.videoHeight / (video.videoWidth / width);
-              if (height > vh - 150){
-                  height = vh - 150;
+              if (height > vh - 350){
+                  height = vh - 350;
                   width = video.videoWidth / (video.videoHeight / height);
               }
 
