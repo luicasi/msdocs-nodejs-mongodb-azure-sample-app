@@ -14,3 +14,21 @@ a {
 .bg-azure-light-gray {
   background-color: #EBEBEB;
 }
+
+div.data {float: left; 
+  max-width: 320px; 
+  width: 100%;
+  padding: 10px; 
+  margin: 10px; 
+  font-size: 12pt;
+  background-color: #EEEEEE; 
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  border-radius: 7px;
+}
+
+div.data button {
+  margin: 5px; 
+  border-radius: 7px;
+}
+
+.template {display: none; }

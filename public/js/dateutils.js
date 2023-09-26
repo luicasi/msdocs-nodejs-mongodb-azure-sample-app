@@ -25,6 +25,10 @@ Date.IsDate = function(p_Expression){
 }
 
 Date.CDate = function(p_Date){
+  if (p_Date instanceof Date) {
+    return p_Date;
+  }
+
 	if(Date.IsDate(p_Date)){ return new Date(p_Date); }
 
 	var strTry = p_Date.replace(/\-/g, '/').replace(/\./g, '/').replace(/ /g, '/');	// fix separators

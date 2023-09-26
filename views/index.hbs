@@ -1,57 +1,65 @@
-<form action="./addTask" method="POST" class='form-registration'>
-  <div class='row my-3'>
-    <div class='col-md-2 align-bottom'>
-      <label for="taskName" class='fs-5'>New task</label>
-    </div>
-    <div class='col-md-8'>
-      <input class="form-control form-control-sm" type="text" name='taskName' placeholder="Enter new task here"/>
-    </div>
-    <div class='col-md-2 text-end'>
-      <button class='btn btn-success btn-sm' type='submit'>Add task</button>
+<script type="text/javascript">
+function loadData() 
+{	
+	ajaxCall2("/data/dates_list", {}, loadDataCB);
+}
+
+function loadDataCB(sentData, retData) 
+{	
+	var cnt = $("#data-cnt");
+	clearContent(cnt);
+	
+	$.each(retData.data, function(index, item) {
+		var i = createFromTemplate(cnt);
+		i.data("data", item);
+		$("span[name=data]", i).text(formatDate(item.date));
+    if (item.status == 0){
+  		$("span[name=testo]", i).text("Nessuna immagine");
+    }
+    else if (item.status == 1){
+  		$("span[name=testo]", i).text("Immagini da lavorare");
+    }
+    setVisible($("button[name=bt1]", i).closest("div"), true);
+    setVisible($("button[name=bt2]", i).closest("div"), item.status == 1);
+    setVisible($("button[name=bt3]", i).closest("div"), item.status == 0);
+    setVisible($("button[name=bt4]", i).closest("div"), item.status == 0);
+
+    $("button", i).on("click", onButtonClick);
+	});	
+  
+}
+
+function formatDate(d) 
+{
+	var ret = "";
+	var d1 = d.split("-");
+	var d2 = new Date(parseInt(d.substr(0, 4), 10), parseInt(d.substr(4, 2), 10) - 1, parseInt(d.substr(6, 2), 10), 0, 0, 0);
+	
+	return Date.Format(d2, "dddd dd/mm");		
+}
+
+function onButtonClick() {
+  var div = $(this).closest("div.data");
+  var item = div.data("data");
+
+  alert(formatDate(item.date) + "\n" + $(this).text());
+}
+
+$(function() {
+  loadData();
+});
+</script>
+<div page="main">
+  <div id="data-cnt" class="eventi" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
+    <div class="template data" style="flex-grow: 1.5; ">
+      <span name="data" style="font-weight: bold; "></span>
+      <br/>
+      <span name="testo" style="font-style: italic; font-size: 10pt; "></span> 
+      <br/>
+      <div><button name="bt1">Aggiungi immagini</button><br/></div>
+      <div><button name="bt2">Visualizza le immagini</button><br/></div>
+      <div><button name="bt3">Giorno non lavorativo</button><br/></div>
+      <div><button name="bt4">Nessuna immagine per questo giorno</button><br/></div>
     </div>
   </div>
-</form>
-
-
-<h5 class='my-2'>Current tasks</h5>
-<div class='row mb-3 border-bottom border-3'>
-    <div class='col-md-6 fw-bold'>Task</div>
-    <div class='col-md-2 fw-bold'>Created</div>
-    <div class='col-md-4 fw-bold'>Action</div>
 </div>
-
-{{#each this.currentTasks}}
-    <div class='row mb-2'>
-      <div class='col-sm-6'>{{taskName}}</div> 
-      <div class='col-sm-2'>{{dateFormat createDate "yyyy-MM-DD HH:mm"}}</div> 
-      <div class='col-sm-2'>
-        <form action='./completeTask' method='POST' class='form-registration'>
-          <input type='hidden' name='_id' value='{{_id}}'/>
-          <button class='btn btn-primary btn-sm mx-1' type='submit'>Complete</button> 
-        </form>
-      </div>
-      <div class='col-sm-2'>
-        <form action='./deleteTask' method='POST' class='form-registration'>
-          <input type='hidden' name='_id' value='{{_id}}'/>
-          <button class='btn btn-danger btn-sm mx-1'>Delete</button> 
-        </form>
-      </div>
-    </div>
-{{/each}}
-
-<h5 class='my-2'>Completed tasks</h5>
-<div class='row mb-3 border-bottom border-3'>
-    <div class='col-md-8 fw-bold'>Task</div>
-    <div class='col-md-2 fw-bold'>Created</div>
-    <div class='col-md-2 fw-bold'>Completed</div>
-</div>
-
-{{#each this.completedTasks}}
-    <div class='row mb-2'>
-      <div class='col-sm-8'>{{taskName}}</div> 
-      <div class='col-sm-2'>{{dateFormat createDate "yyyy-MM-DD HH:mm"}}</div> 
-      <div class='col-sm-2'>{{dateFormat completedDate "yyyy-MM-DD HH:mm"}}</div> 
-    </div>
-{{/each}}
-
-<a href="./pictures">Upload immagini</a>
