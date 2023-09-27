@@ -234,6 +234,9 @@ var shoot = (() => {
       video.addEventListener('canplay', function(ev) {
           if (!streaming) {
               height = video.videoHeight / (video.videoWidth / width);
+
+              $("span[name=msg]").text(`video height: ${video.videoHeight}, video width: ${video.videoWidth}, doc height: ${vh}, doc width: ${vw}`);
+
               if (height > vh - 350){
                   height = vh - 350;
                   width = video.videoWidth / (video.videoHeight / height);
@@ -388,7 +391,9 @@ $(function() {
           <video id="video">Video stream not available.</video>
       </div>
       <div>
-      <button id="startbutton">Capture Image</button>
+      <button id="startbutton">Scatta la foto</button>
+      <br/>
+      <span name="msg"></span>
       </div>
   </div>
   <canvas id="canvas" style="display: none; "></canvas>
@@ -398,7 +403,7 @@ $(function() {
           <img id="photo" alt="The image captured will appear in this box.">
       </div>
       <br/>
-      <button id="uploadpicture">Upload this picture</button>
-      <button id="shootagain">Take another picture</button>
+      <button id="uploadpicture">Salva l'immagine</button>
+      <button id="shootagain">Scatta un'altra foto</button>
   </div>
 </div>
