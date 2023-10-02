@@ -371,15 +371,19 @@ $(function() {
 </div>
 
 <div page="pictures" style="margin: 10px; ">
-  <span name="date" style="font-weight: bold; font-size: 12pt; "></span> &nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a> &nbsp;&nbsp; <a name="shoot" href="javascript: void(0);">[Scatta una foto]</a>
+  <span name="date" style="font-weight: bold; font-size: 12pt; "></span>
+  <span>&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a></span>
+  <span>&nbsp;&nbsp; <a name="shoot" href="javascript: void(0);">[Scatta una foto]</a></span> 
+  <span>&nbsp;&nbsp;<input type="file" name="file" id="file" class="hiddeninputfile" accept="image/*"/>
+  <label for="file">Aggiungi una foto</label></span>
   <hr/>
   <div name="pictures-cnt" style="text-align: center; ">
     <div class="template item">
       <img style="width:250px;">
       <br/>
-      <button name="done" style="font-weight: bold; font-size: 12pt; padding: 5px; border-radius: 7px; background-color: #FFFFFF; ">Gestita</button>
+      <button name="done" style="font-weight: bold; font-size: 12pt; width:250px; padding: 5px; border-radius: 7px; background-color: #FFFFFF; ">Gestita</button>
+      <br/><br/>
     </div>
-  <br/>
   </div>
 </div>
 
