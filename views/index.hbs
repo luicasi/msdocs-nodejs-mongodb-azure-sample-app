@@ -60,12 +60,12 @@ var main = (() => {
       else if (item.status == 1){
         $("span[name=testo]", i).text(`${item.openPictures} immagini da lavorare su ${item.totalPictures}`);
       }
-      setVisible($("button[name=bt1]", i).closest("div"), true);
-      setVisible($("button[name=bt2]", i).closest("div"), item.status == 1);
-      setVisible($("button[name=bt3]", i).closest("div"), item.status == 0);
-      setVisible($("button[name=bt4]", i).closest("div"), item.status == 0);
+      setVisible($("label[name=bt1]", i).closest("div"), true);
+      setVisible($("label[name=bt2]", i).closest("div"), item.status == 1);
+      setVisible($("label[name=bt3]", i).closest("div"), item.status == 0);
+      setVisible($("label[name=bt4]", i).closest("div"), item.status == 0);
 
-      $("button", i).on("click", onButtonClick);
+      $("label", i).on("click", onButtonClick);
       $(i).on("click", onDateClick);
     });	
     
@@ -80,7 +80,7 @@ var main = (() => {
     $(this).toggleClass("open");
 
     if ($(this).attr("name") == "bt1"){
-      showShoot(item.date);
+      //showShoot(item.date);
     }
     else if ($(this).attr("name") == "bt2"){
       showPictures(item.date);
@@ -118,6 +118,7 @@ var pictures = (() => {
 
     $("a[name=home]", cnt).on("click", () => main.show(true))
     $("a[name=shoot]", cnt).on("click", () => shoot.show(currentDate))
+    $("#file1").on("change", fileChange);
   }
 
   function show(dt) {
@@ -145,6 +146,25 @@ var pictures = (() => {
     });	
     
     app.showPage("pictures")
+  }
+
+  function fileChange(ev) 
+  {
+    const form = new FormData();
+    form.append("date", currentDate);
+    form.append("file", ev.target.files[0])
+    fetch("data/add_picture", {
+      method:'POST',
+      body:form,
+    }, )
+    .then(res => {
+        ev.target.value = "";
+        if (res.ok) 
+            loadData();
+        else 
+            alert(res.text());
+        })
+    .catch(err => alert(err))
   }
 
   function onDoneClick() {
@@ -342,7 +362,7 @@ function showShoot(dt){
 $(function() {
   main.init();
   pictures.init();
-  shoot.init();
+  //shoot.init();
 
   app.showPage("loading")
 
@@ -360,12 +380,15 @@ $(function() {
     <div class="template data" style="flex-grow: 1.5; ">
       <span name="data" style="font-weight: bold; "></span>
       <br/>
-      <span name="testo" style="font-style: italic; font-size: 10pt; "></span> 
+    <span name="testo" style="font-style: italic; font-size: 10pt; "></span> 
       <br/>
-      <div><button name="bt1">Aggiungi immagini</button><br/></div>
-      <div><button name="bt2">Visualizza le immagini</button><br/></div>
-      <div><button name="bt3">Giorno non lavorativo</button><br/></div>
-      <div><button name="bt4">Nessuna immagine per questo giorno</button><br/></div>
+      <div>
+      <span><input type="file" name="file" id="file2" class="hiddeninputfile" accept="image/*"/>
+      <label for="file2" class="button" name="bt1">Aggiungi una foto</label></span>
+      </div>
+      <div><label class="button" name="bt2">Visualizza le immagini</label><br/></div>
+      <div><label class="button" name="bt3">Giorno non lavorativo</label><br/></div>
+      <div><label class="button" name="bt4">Nessuna immagine per questo giorno</label><br/></div>
     </div>
   </div>
 </div>
@@ -373,9 +396,8 @@ $(function() {
 <div page="pictures" style="margin: 10px; ">
   <span name="date" style="font-weight: bold; font-size: 12pt; "></span>
   <span>&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a></span>
-  <span>&nbsp;&nbsp; <a name="shoot" href="javascript: void(0);">[Scatta una foto]</a></span> 
-  <span>&nbsp;&nbsp;<input type="file" name="file" id="file" class="hiddeninputfile" accept="image/*"/>
-  <label for="file">Aggiungi una foto</label></span>
+  <span>&nbsp;&nbsp;<input type="file" name="file" id="file1" class="hiddeninputfile" accept="image/*"/>
+  <label for="file1" class="link">[Aggiungi una foto]</label></span>
   <hr/>
   <div name="pictures-cnt" style="text-align: center; ">
     <div class="template item">
