@@ -1,6 +1,4 @@
 <script type="text/javascript">
-var currentDate;
-
 var app = (() => {
   function showPage(page) {
     $("div[page]").each((index, element) => {
@@ -27,6 +25,9 @@ var app = (() => {
 })();
 
 var main = (() => {
+  var selectedDate = null;
+  var displayAll = false;
+
   function init() {
 
   }
@@ -42,7 +43,7 @@ var main = (() => {
 
   function loadData() 
   {	
-    ajaxCall2("/data/dates_list", {}, loadDataCB);
+    ajaxCall2("/data/dates_list", {opt: displayAll ? 1 : 0}, loadDataCB);
   }
 
   function loadDataCB(sentData, retData) 
@@ -60,11 +61,25 @@ var main = (() => {
       else if (item.status == 1){
         $("span[name=testo]", i).text(`${item.openPictures} immagini da lavorare su ${item.totalPictures}`);
       }
-      setVisible($("label[name=bt1]", i).closest("div"), true);
+      else if (item.status == 2){
+        $("span[name=testo]", i).text(`Completato, ${item.totalPictures} immagini`);
+      }
+      else if (item.status == 3){
+        $("span[name=testo]", i).text("Giorno non lavorativo");
+      }
+      else if (item.status == 4){
+        $("span[name=testo]", i).text("Nessuna immagine");
+      }
+
+      $("label[name=bt1]", i).attr("for", "file" + index);
+      $("input[name=file]", i).attr("id", "file" + index);
+
+      setVisible($("label[name=bt1]", i).closest("div"), item.status == 0 || item.status == 1);
       setVisible($("label[name=bt2]", i).closest("div"), item.status == 1);
       setVisible($("label[name=bt3]", i).closest("div"), item.status == 0);
       setVisible($("label[name=bt4]", i).closest("div"), item.status == 0);
 
+      $("input[name=file]", i).on("change", fileChange)
       $("label", i).on("click", onButtonClick);
       $(i).on("click", onDateClick);
     });	
@@ -74,16 +89,52 @@ var main = (() => {
 
 
   function onButtonClick() {
-    var div = $(this).closest("div.data");
-    var item = div.data("data");
+    const div = $(this).closest("div.data");
+    const item = div.data("data");
+
+    selectedDate = item.date;
 
     $(this).toggleClass("open");
 
-    if ($(this).attr("name") == "bt1"){
+    const name = $(this).attr("name");
+
+    if (name == "bt1"){
       //showShoot(item.date);
     }
-    else if ($(this).attr("name") == "bt2"){
+    else if (name == "bt2"){
       showPictures(item.date);
+    }
+    else if (name == "bt3"){
+      if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
+      {
+        fetch("/data/add_not_working_day", {
+          method:'POST',
+          body:new URLSearchParams({ 'date': selectedDate })
+          })
+        .then(res => {
+            if (res.ok) 
+                div.remove();
+            else 
+                alert(res.text());
+            })
+        .catch(err => alert(err.message))
+      }
+    }
+    else if (name == "bt4"){
+      if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
+      {
+        fetch("/data/add_empty_day", {
+          method:'POST',
+          body:new URLSearchParams({ 'date': selectedDate })
+          })
+        .then(res => {
+            if (res.ok) 
+                div.remove();
+            else 
+                alert(res.text());
+            })
+        .catch(err => alert(err.message))
+      }
     }
     else {
       alert(app.formatDate(item.date) + "\n" + $(this).text());
@@ -101,6 +152,30 @@ var main = (() => {
     }
   }
 
+  function fileChange(ev) 
+  {
+    $.LoadingOverlay("show");
+
+    const form = new FormData();
+    form.append("date", selectedDate);
+    form.append("file", ev.target.files[0])
+    fetch("data/add_picture", {
+      method:'POST',
+      body:form,
+    }, )
+    .then(res => {
+       $.LoadingOverlay("hide");
+        ev.target.value = "";
+        if (res.ok) 
+            pictures.show(selectedDate);
+        else 
+            alert(res.text());
+        })
+    .catch(err => {
+      $.LoadingOverlay("hide");
+      alert(err);
+    })
+  }
 
   return {
     init: init,
@@ -150,6 +225,8 @@ var pictures = (() => {
 
   function fileChange(ev) 
   {
+    $.LoadingOverlay("show");
+
     const form = new FormData();
     form.append("date", currentDate);
     form.append("file", ev.target.files[0])
@@ -158,13 +235,17 @@ var pictures = (() => {
       body:form,
     }, )
     .then(res => {
+       $.LoadingOverlay("hide");
         ev.target.value = "";
         if (res.ok) 
             loadData();
         else 
             alert(res.text());
         })
-    .catch(err => alert(err))
+    .catch(err => {
+      $.LoadingOverlay("hide");
+      alert(err);
+    })
   }
 
   function onDoneClick() {
@@ -191,178 +272,13 @@ var pictures = (() => {
     show: show
   }
 })();
-
-var shoot = (() => {
-
-  var currentDate;
-  var cnt;
-
-  function init() {
-    cnt = $("div[page=shoot]");
-
-    $("a[name=home]", cnt).on("click", () => main.show(true))
-    $("a[name=pictures]", cnt).on("click", () => pictures.show(currentDate))
-
-    startup();
-  }
-
-  function show(dt) {
-    currentDate = dt;
-    $("span[name=date]", cnt).text(app.formatDate(currentDate));
-    app.showPage("shoot");
-
-    clearphoto();
-    $("#shooting").show();
-  }
-
-    
-  const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-  const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-
-  // We will scale the photo width to this.
-  var width = vw - 50;
-  // The height will be computed based on the input stream.
-  var height = 0;
-
-  var streaming = false;
-
-  var video = null;
-  var canvas = null;
-  var photo = null;
-
-  function startup() {
-      video = document.getElementById('video');
-      canvas = document.getElementById('canvas');
-      photo = document.getElementById('photo');
-
-      // Access the video stream from the webcam.
-      navigator.mediaDevices.getUserMedia({
-          video: {
-              facingMode: 'environment'
-          },
-          audio: false
-      })
-      // Upon success, stream video in a video tag.
-      .then(function(stream) {
-          video.srcObject = stream;
-          video.play();
-      })
-      .catch(function(err) {
-          console.log("An error occurred: " + err);
-      });
-
-      video.addEventListener('canplay', function(ev) {
-          if (!streaming) {
-              height = video.videoHeight / (video.videoWidth / width);
-
-              $("span[name=msg]").text(`video height: ${video.videoHeight}, video width: ${video.videoWidth}, doc height: ${vh}, doc width: ${vw}`);
-
-              if (height > vh - 350){
-                  height = vh - 350;
-                  width = video.videoWidth / (video.videoHeight / height);
-              }
-
-              if (isNaN(height)) {
-                  height = width / (4 / 3);
-              }
-
-              $(video).css('width', width);
-              $(video).css('height', height);
-              $(canvas).css('width', width);
-              $(canvas).css('height', height);
-              streaming = true;
-          }
-      }, false);
-
-      $("#startbutton").on('click', function(ev) {
-          takepicture();
-      });
-
-      $("#uploadpicture").on('click', function(ev) {
-          canvas.toBlob(upload);
-      });
-
-      $("#shootagain").on('click', function(ev) {
-          clearphoto();
-          $("#uploading").fadeOut(() => $("#shooting").fadeIn());
-      });
-
-      clearphoto();
-
-      $("#shooting").show();
-  }
-    
-  function upload(blob) {
-    const form = new FormData();
-    form.append("date", currentDate);
-    form.append("file", blob, "pic.png")
-    fetch("data/add_picture", {
-      method:'POST',
-      body:form,
-    }, )
-    .then(res => {
-        if (res.ok) 
-            alert("Immagine salvata");
-        else 
-            alert(res.text());
-        })
-    .catch(err => alert(err))
-  }	
-			
-  /*Collect the frames of the photo from the canvas and then
-    convert it into a PNG format, so that it can be shown in
-    the HTML page.*/
-  function clearphoto() {
-      var context = canvas.getContext('2d');
-      context.fillStyle = "#AAA";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-
-      var data = canvas.toDataURL('image/png');
-
-      photo.setAttribute('src', data);
-  }
-
-  /*Capture a frame from the video stream.*/
-  function takepicture() {
-      var context = canvas.getContext('2d');
-      if (width && height) {
-          canvas.width = width;
-          canvas.height = height;
-          context.drawImage(video, 0, 0, width, height);
-
-          /*toDataURL('image/png') returns a data URL containing a
-            representation of the image in PNG format.*/
-          var data = canvas.toDataURL('image/png');
-
-          /*'src' is the name of the attribute whose value is to be set.
-            'data' is a string containing the value to assign to the attribute.*/
-          photo.setAttribute('src', data);
-          $("#shooting").fadeOut(() => $("#uploading").fadeIn());
-          
-      } else {
-          clearphoto();
-      }
-  }
-
-
-  return {
-    init: init,
-    show: show
-  }
-})();
-
 function showPictures(dt){
   pictures.show(dt);
-}
-
-function showShoot(dt){
-  shoot.show(dt);
 }
 
 $(function() {
   main.init();
   pictures.init();
-  //shoot.init();
 
   app.showPage("loading")
 
@@ -383,8 +299,8 @@ $(function() {
     <span name="testo" style="font-style: italic; font-size: 10pt; "></span> 
       <br/>
       <div>
-      <span><input type="file" name="file" id="file2" class="hiddeninputfile" accept="image/*"/>
-      <label for="file2" class="button" name="bt1">Aggiungi una foto</label></span>
+      <input type="file" name="file" id="file2" class="hiddeninputfile" accept="image/*"/>
+      <label for="file2" class="button" name="bt1">Aggiungi una foto</label>
       </div>
       <div><label class="button" name="bt2">Visualizza le immagini</label><br/></div>
       <div><label class="button" name="bt3">Giorno non lavorativo</label><br/></div>
@@ -409,22 +325,7 @@ $(function() {
   </div>
 </div>
 
-<div page="shoot" style="margin: 10px; ">
-  <span name="date" style="font-weight: bold; font-size: 12pt; "></span> &nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a> &nbsp;&nbsp; <a name="pictures" href="javascript: void(0);">[Immagini]</a>
-  <hr/>
-  <div id="shooting" style="display: none;">
-      <div class="camera">
-          <video id="video">Video stream not available.</video>
-      </div>
-      <div>
-      <button id="startbutton">Scatta la foto</button>
-      <br/>
-      <span name="msg"></span>
-      </div>
-  </div>
-  <canvas id="canvas" style="display: none; "></canvas>
-
-  <div id="uploading" style="display: none;">
+ <div id="uploading" style="display: none;">
       <div class="output">
           <img id="photo" alt="The image captured will appear in this box.">
       </div>
