@@ -18,7 +18,7 @@ router.post('/login', express.urlencoded({ extended: false }), function (req, re
       // login logic to validate req.body.user and req.body.pass
       // would be implemented here. for this example any combo works
     
-      if (req.body.user != "ale" || req.body.pass != "alb000"){
+      if (req.body.user.toLowerCase() != "ale" || req.body.pass != "alb000"){
         res.render('login', {message: "Credenziali non valide"});
         return;
       }
