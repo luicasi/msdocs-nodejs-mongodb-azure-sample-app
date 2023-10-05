@@ -1,11 +1,12 @@
-var createError = require("http-errors");
-var hbs = require('hbs');
-var express = require("express");
-var mongoose = require("mongoose");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
+const createError = require("http-errors");
+const hbs = require('hbs');
+const express = require("express");
+const mongoose = require("mongoose");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
 const bodyParser = require('body-parser');
+const session = require('express-session');
 
 hbs.registerHelper('dateFormat', require('handlebars-dateformat'));
 
@@ -37,22 +38,24 @@ async function getApp() {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
   app.use(express.static(path.join(__dirname, "public")));
+  app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true
+  }));
 
   app.use("/", indexRouter);
-  app.use("/pictures", pictures);
-  app.use('/upload', upload);
+  //app.use("/pictures", pictures);
+  //app.use('/upload', upload);
   app.use('/data', data);
   app.use("/bootstrap/js", express.static(__dirname + "/node_modules/bootstrap/dist/js")); // redirect bootstrap JS
-  app.use(
-    "/bootstrap/css",
-    express.static(__dirname + "/node_modules/bootstrap/dist/css")
-  ); // redirect CSS bootstrap
+  app.use("/bootstrap/css", express.static(__dirname + "/node_modules/bootstrap/dist/css")); // redirect CSS bootstrap
 
   // catch 404 and forward to error handler
   app.use(function (req, res, next) {
     next(createError(404));
   });
-
+  
   // error handler
   app.use(function (err, req, res, next) {
     // set locals, only providing error in development

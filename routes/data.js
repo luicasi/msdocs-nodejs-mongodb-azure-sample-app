@@ -184,8 +184,42 @@ router.post('/add_empty_day', function(req, res, next) {
         res.json({success: false, message: err.message});
     });
 });
-
   
+router.post('/set_day_done', function(req, res, next) {
+    const date = req.body.date;
+    
+    Day.find()
+    .then(days => {
+        const d1 = days.filter(item => item.date == date);
+        if (d1.length == 0) {
+            res.json({success: false, message: "date not found [" + date + "]"});
+            return;
+        }
+
+        const day = d1[0];
+        if (day.status != 1){
+            res.json({success: false, message: "wrong status for date [" + day.status + "]"});
+            return;
+        }
+
+        day.status = 2;
+        day.updatedDate = Date.now();
+
+        day.save()
+        .then(() => { 
+            console.log(`Saved day ${date}`)
+            res.json({success: true}); })
+          .catch((err) => {
+              console.log(err);
+              res.json({success: false, message: err.message});
+          });      
+    })
+    .catch((err) => {
+        console.log(err);
+        res.json({success: false, message: err.message});
+    });
+});
+
 router.post('/set_picture_done', function(req, res, next) {
     const date = req.body.date;
     const name = req.body.name;
@@ -205,26 +239,17 @@ router.post('/set_picture_done', function(req, res, next) {
         }
 
         var pictureFound = false;
-        var anyZero = false;
         for (var i = 0; i < day.pictures.length; i++)
         {
             if (day.pictures[i].name == name){
                 day.pictures[i].status = 1;
                 pictureFound = true;
             }
-            else if (day.pictures[i].status == 0){
-                anyZero = true;
-            }
         }
 
         if (!pictureFound){
             res.json({success: false, message: "picture not found [" + name + "]"});
             return;
-        }
-
-        if (!anyZero){
-            day.status = 2;
-            day.updatedDate = Date.now();
         }
 
         day.save()
@@ -244,7 +269,6 @@ router.post('/set_picture_done', function(req, res, next) {
 
 router.post('/delete_date', function(req, res, next) {
     const dayId = req.body._id;
-    const completedDate = Date.now();
     Day.findByIdAndDelete(dayId)
       .then(() => { 
         console.log(`Deleted day $(dayId)`)      

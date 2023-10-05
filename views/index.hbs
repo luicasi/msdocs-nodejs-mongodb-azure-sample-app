@@ -25,11 +25,25 @@ var app = (() => {
 })();
 
 var main = (() => {
+  var page;
   var selectedDate = null;
   var displayAll = false;
 
   function init() {
+    page = $("div[page=main]");
+    setVisible($("a[name='pending-dates']", page), displayAll);
+    setVisible($("a[name='all-dates']", page), !displayAll);
 
+    $("a[name='all-dates']", page).on("click", () => { setDisplay(true); })
+    $("a[name='pending-dates']", page).on("click", () => { setDisplay(false); })
+  }
+
+  function setDisplay(all){
+    displayAll = all;
+    setVisible($("a[name='pending-dates']", page), displayAll);
+    setVisible($("a[name='all-dates']", page), !displayAll);
+
+    loadData(true);
   }
 
   function show(bLoadData) {
@@ -43,11 +57,14 @@ var main = (() => {
 
   function loadData() 
   {	
+    $.LoadingOverlay("show");
     ajaxCall2("/data/dates_list", {opt: displayAll ? 1 : 0}, loadDataCB);
   }
 
   function loadDataCB(sentData, retData) 
   {	
+    $.LoadingOverlay("hide");
+
     var cnt = $("div[name=data-cnt]");
     clearContent(cnt);
     
@@ -76,6 +93,7 @@ var main = (() => {
 
       setVisible($("label[name=bt1]", i).closest("div"), item.status == 0 || item.status == 1);
       setVisible($("label[name=bt2]", i).closest("div"), item.status == 1);
+      setVisible($("label[name=bt5]", i).closest("div"), item.status == 1 && item.openPictures == item.totalPictures);
       setVisible($("label[name=bt3]", i).closest("div"), item.status == 0);
       setVisible($("label[name=bt4]", i).closest("div"), item.status == 0);
 
@@ -88,7 +106,9 @@ var main = (() => {
   }
 
 
-  function onButtonClick() {
+  function onButtonClick(event) {
+    event.stopPropagation();
+
     const div = $(this).closest("div.data");
     const item = div.data("data");
 
@@ -124,6 +144,22 @@ var main = (() => {
       if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
       {
         fetch("/data/add_empty_day", {
+          method:'POST',
+          body:new URLSearchParams({ 'date': selectedDate })
+          })
+        .then(res => {
+            if (res.ok) 
+                div.remove();
+            else 
+                alert(res.text());
+            })
+        .catch(err => alert(err.message))
+      }
+    }
+    else if (name == "bt5"){
+      if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
+      {
+        fetch("/data/set_day_done", {
           method:'POST',
           body:new URLSearchParams({ 'date': selectedDate })
           })
@@ -280,36 +316,33 @@ $(function() {
   main.init();
   pictures.init();
 
-  app.showPage("loading")
-
   main.show(true);
 });
 
 </script>
 
-<div page="loading" style="text-align: center; padding: 20px; ">
-  <h3>Avvio applicazione...</h3>
-</div>
-
-<div page="main">
-  <div name="data-cnt" class="eventi" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
+<div page="main" style="margin: 2px; display: none; ">
+  <a name="all-dates" href="javascript: void(0);" style="display: none; ">[Tutte le date]</a>
+  <a name="pending-dates" href="javascript: void(0);" style="display: none; ">[Date aperte]</a>
+  <div name="data-cnt" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
     <div class="template data" style="flex-grow: 1.5; ">
       <span name="data" style="font-weight: bold; "></span>
       <br/>
-    <span name="testo" style="font-style: italic; font-size: 10pt; "></span> 
+      <span name="testo" style="font-style: italic; font-size: 10pt; "></span> 
       <br/>
       <div>
-      <input type="file" name="file" id="file2" class="hiddeninputfile" accept="image/*"/>
-      <label for="file2" class="button" name="bt1">Aggiungi una foto</label>
+        <input type="file" name="file" id="file2" class="hiddeninputfile" accept="image/*"/>
+        <label for="file2" class="button" name="bt1">Aggiungi una foto</label>
       </div>
       <div><label class="button" name="bt2">Visualizza le immagini</label><br/></div>
+      <div><label class="button" name="bt5">Giorno completato</label><br/></div>
       <div><label class="button" name="bt3">Giorno non lavorativo</label><br/></div>
       <div><label class="button" name="bt4">Nessuna immagine per questo giorno</label><br/></div>
     </div>
   </div>
 </div>
 
-<div page="pictures" style="margin: 10px; ">
+<div page="pictures" style="margin: 10px; display: none; ">
   <span name="date" style="font-weight: bold; font-size: 12pt; "></span>
   <span>&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a></span>
   <span>&nbsp;&nbsp;<input type="file" name="file" id="file1" class="hiddeninputfile" accept="image/*"/>
@@ -322,15 +355,5 @@ $(function() {
       <button name="done" style="font-weight: bold; font-size: 12pt; width:250px; padding: 5px; border-radius: 7px; background-color: #FFFFFF; ">Gestita</button>
       <br/><br/>
     </div>
-  </div>
-</div>
-
- <div id="uploading" style="display: none;">
-      <div class="output">
-          <img id="photo" alt="The image captured will appear in this box.">
-      </div>
-      <br/>
-      <button id="uploadpicture">Salva l'immagine</button>
-      <button id="shootagain">Scatta un'altra foto</button>
   </div>
 </div>
