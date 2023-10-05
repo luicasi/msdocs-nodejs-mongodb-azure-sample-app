@@ -243,7 +243,7 @@ var pictures = (() => {
   {	
     //TODO: sistemare questa opzione in base ad un toggle come sulla main
     // può convenire caricare tutte le immagini e poi visualizzarle in base allo status dell'immagine, lo status del giorno e la selezione dell'utente
-    ajaxCall2("/data/pictures_list", {date: currentDate, opt: 0}, loadDataCB);
+    ajaxCall2("/data/pictures_list", {date: currentDate}, loadDataCB);
   }
 
   function loadDataCB(sentData, retData) 

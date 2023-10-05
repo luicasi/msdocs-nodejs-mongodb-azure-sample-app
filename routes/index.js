@@ -18,7 +18,15 @@ router.post('/login', express.urlencoded({ extended: false }), function (req, re
       // login logic to validate req.body.user and req.body.pass
       // would be implemented here. for this example any combo works
     
-      if (req.body.user.toLowerCase() != "ale" || req.body.pass != "alb000"){
+      var user = "";
+
+      if (req.body.pass == "alb000"){
+        user = "admin";
+      }
+      else if (req.body.pass == "sh123"){
+        user = "user";
+      }
+      else {
         res.render('login', {message: "Credenziali non valide"});
         return;
       }
@@ -29,7 +37,7 @@ router.post('/login', express.urlencoded({ extended: false }), function (req, re
         if (err) next(err)
     
         // store user information in session, typically a user id
-        req.session.user = req.body.user
+        req.session.user = user
     
         // save the session before redirection to ensure page
         // load does not happen before session is saved

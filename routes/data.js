@@ -58,16 +58,12 @@ router.get('/dates_list', async function(req, res, next) {
 
 router.get('/pictures_list', async function(req, res, next) {
     const date = req.query.date;
-    const opt = req.query.opt;
-
 
     const day = await Day.findOne({ 'date': date });
     if (day) {
         var data = {day: {date: date, status: day.status, accountName: config.getStorageAccountName(), containerName: containerName}, pictures: []};
         for (const picture of day.pictures){
-            if (picture.status == "0" || opt == "1"){
-                data.pictures.push({name: picture.name, status: picture.status});
-            }
+            data.pictures.push({name: picture.name, status: picture.status});
         }
         res.json({success: true, data: data});
         return;
