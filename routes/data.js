@@ -60,23 +60,22 @@ router.get('/pictures_list', async function(req, res, next) {
     const date = req.query.date;
     const opt = req.query.opt;
 
-    var data = [];
 
     const day = await Day.findOne({ 'date': date });
-    if (day){
+    if (day) {
+        var data = {day: {date: date, status: day.status, accountName: config.getStorageAccountName(), containerName: containerName}, pictures: []};
         for (const picture of day.pictures){
-            if (picture.status == 0 || opt == "1"){
-                data.push({name: picture.name, accountName: config.getStorageAccountName(), containerName: containerName, status: picture.status});
+            if (picture.status == "0" || opt == "1"){
+                data.pictures.push({name: picture.name, status: picture.status});
             }
         }
+        res.json({success: true, data: data});
+        return;
     }
     else {
         res.json({success: false, message: "date not found [" + date + "]"});
         return;
     }
-
-    res.json({success: true, data: data});
-    return;
 });
 
 router.post('/add_not_working_day', function(req, res, next) {

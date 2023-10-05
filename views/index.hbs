@@ -73,7 +73,7 @@ var main = (() => {
       i.data("data", item);
       $("span[name=data]", i).text(app.formatDate(item.date));
       if (item.status == 0){
-        $("span[name=testo]", i).text("Nessuna immagine");
+        $("span[name=testo]", i).text("Nessuna immagine caricata");
       }
       else if (item.status == 1){
         $("span[name=testo]", i).text(`${item.openPictures} immagini da lavorare su ${item.totalPictures}`);
@@ -92,7 +92,7 @@ var main = (() => {
       $("input[name=file]", i).attr("id", "file" + index);
 
       setVisible($("label[name=bt1]", i).closest("div"), item.status == 0 || item.status == 1);
-      setVisible($("label[name=bt2]", i).closest("div"), item.status == 1);
+      setVisible($("label[name=bt2]", i).closest("div"), item.status == 1 || item.status == 2);
       setVisible($("label[name=bt5]", i).closest("div"), item.status == 1 && item.openPictures == item.totalPictures);
       setVisible($("label[name=bt3]", i).closest("div"), item.status == 0);
       setVisible($("label[name=bt4]", i).closest("div"), item.status == 0);
@@ -122,7 +122,7 @@ var main = (() => {
       //showShoot(item.date);
     }
     else if (name == "bt2"){
-      showPictures(item.date);
+      pictures.show(item.date);
     }
     else if (name == "bt3"){
       if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
@@ -228,19 +228,22 @@ var pictures = (() => {
     cnt = $("div[page=pictures]");
 
     $("a[name=home]", cnt).on("click", () => main.show(true))
-    $("a[name=shoot]", cnt).on("click", () => shoot.show(currentDate))
     $("#file1").on("change", fileChange);
   }
 
   function show(dt) {
     currentDate = dt;
     $("span[name=date]", cnt).text(app.formatDate(currentDate));
+    $("label[name=upload]", cnt).hide();
+
     loadData();
   }
 
   function loadData() 
   {	
-    ajaxCall2("/data/pictures_list", {date: currentDate}, loadDataCB);
+    //TODO: sistemare questa opzione in base ad un toggle come sulla main
+    // può convenire caricare tutte le immagini e poi visualizzarle in base allo status dell'immagine, lo status del giorno e la selezione dell'utente
+    ajaxCall2("/data/pictures_list", {date: currentDate, opt: 0}, loadDataCB);
   }
 
   function loadDataCB(sentData, retData) 
@@ -248,14 +251,20 @@ var pictures = (() => {
     var cntPics = $("div[name=pictures-cnt]", cnt);
     clearContent(cntPics);
     
-    $.each(retData.data, function(index, item) {
+    $.each(retData.data.pictures, function(index, item) {
       var i = createFromTemplate(cntPics);
       i.data("data", item);
-      $("img", i).attr("src", `https://${item.accountName}.blob.core.windows.net/${item.containerName}/${item.name}`);
+      $("img", i).attr("src", `https://${retData.data.day.accountName}.blob.core.windows.net/${retData.data.day.containerName}/${item.name}`);
 
-      $("button[name=done]", i).on("click", onDoneClick);
+      const isEditable = retData.data.day.status == 0 || retData.data.day.status == 1;
+
+      if (!isEditable || item.status != 0)
+        $("button[name=done]", i).hide();
+      else
+        $("button[name=done]", i).on("click", onDoneClick);
     });	
     
+    setVisible($("label[name=upload]", cnt), );
     app.showPage("pictures")
   }
 
@@ -308,9 +317,6 @@ var pictures = (() => {
     show: show
   }
 })();
-function showPictures(dt){
-  pictures.show(dt);
-}
 
 $(function() {
   main.init();
@@ -346,7 +352,7 @@ $(function() {
   <span name="date" style="font-weight: bold; font-size: 12pt; "></span>
   <span>&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a></span>
   <span>&nbsp;&nbsp;<input type="file" name="file" id="file1" class="hiddeninputfile" accept="image/*"/>
-  <label for="file1" class="link">[Aggiungi una foto]</label></span>
+  <label for="file1" class="link" name="upload">[Aggiungi una foto]</label></span>
   <hr/>
   <div name="pictures-cnt" style="text-align: center; ">
     <div class="template item">
