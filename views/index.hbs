@@ -245,7 +245,7 @@ var pictures = (() => {
     });
 
     $('input[name="view"]', page).on('change', function() {
-      displayAll = !$('input[name="view"]', page).prop('checked');
+      displayAll = $('input[name="view"]', page).prop('checked');
       displayPictures();
     });
 
@@ -288,7 +288,6 @@ var pictures = (() => {
     clearContent(cntPics);
     
     const isEditable = receivedData.day.status == 0 || receivedData.day.status == 1;
-    if (!isEditable) displayAll = true;
 
     $.each(receivedData.pictures, function(index, item) {
       if (displayAll || item.status == 0) {
@@ -385,7 +384,7 @@ $(function() {
       {{#if isAdmin}}
       <div><label class="button" name="bt5">Giorno completato</label><br/></div>
       <div><label class="button" name="bt3">Giorno non lavorativo</label><br/></div>
-      <div><label class="button" name="bt4">Nessuna immagine per questo giorno</label><br/>
+      <div><label class="button" name="bt4">Nessuna immagine da caricare</label><br/>
        {{/if}}  
        </div>
     </div>
