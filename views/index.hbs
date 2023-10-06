@@ -31,17 +31,22 @@ var main = (() => {
 
   function init() {
     page = $("div[page=main]");
-    setVisible($("a[name='pending-dates']", page), displayAll);
-    setVisible($("a[name='all-dates']", page), !displayAll);
 
-    $("a[name='all-dates']", page).on("click", () => { setDisplay(true); })
-    $("a[name='pending-dates']", page).on("click", () => { setDisplay(false); })
+    $('input[name="view"]', page).checkboxpicker({
+      offLabel:'aperte',
+      onLabel:'tutte',
+      offTitle:false,
+      onTitle:false,
+    });
+
+    $('input[name="view"]', page).on('change', function() {
+      setDisplay($('input[name="view"]', page).prop('checked'))
+    });
+
   }
 
   function setDisplay(all){
     displayAll = all;
-    setVisible($("a[name='pending-dates']", page), displayAll);
-    setVisible($("a[name='all-dates']", page), !displayAll);
 
     loadData(true);
   }
@@ -222,19 +227,35 @@ var main = (() => {
 var pictures = (() => {
 
   var currentDate;
-  var cnt;
+  var displayAll = false;
+  var page;
+  var receivedData;
 
   function init() {
-    cnt = $("div[page=pictures]");
+    page = $("div[page=pictures]");
 
-    $("a[name=home]", cnt).on("click", () => main.show(true))
+    $("a[name=home]", page).on("click", () => main.show(true))
     $("#file1").on("change", fileChange);
+
+    $('input[name="view"]', page).checkboxpicker({
+      offLabel:'da gestire',
+      onLabel:'tutte',
+      offTitle:false,
+      onTitle:false,
+    });
+
+    $('input[name="view"]', page).on('change', function() {
+      displayAll = !$('input[name="view"]', page).prop('checked');
+      displayPictures();
+    });
+
   }
 
   function show(dt) {
     currentDate = dt;
-    $("span[name=date]", cnt).text(app.formatDate(currentDate));
-    $("label[name=upload]", cnt).hide();
+    $("span[name=date]", page).text(app.formatDate(currentDate));
+    $("label[name=upload]", page).hide();
+    $("div[name=opt-view]", page).hide();
 
     loadData();
   }
@@ -248,24 +269,39 @@ var pictures = (() => {
 
   function loadDataCB(sentData, retData) 
   {	
-    var cntPics = $("div[name=pictures-cnt]", cnt);
+    receivedData = retData.data;
+
+    displayPictures();
+
+    const isEditable = retData.data.day.status == 0 || retData.data.day.status == 1;
+    if (!isEditable) displayAll = true;
+
+    setVisible($("label[name=upload]", page), isEditable);
+    setVisible($("div[name=opt-view]", page), isEditable);
+
+    app.showPage("pictures")
+  }
+
+  function displayPictures() 
+  {
+    var cntPics = $("div[name=pictures-cnt]", page);
     clearContent(cntPics);
     
-    $.each(retData.data.pictures, function(index, item) {
-      var i = createFromTemplate(cntPics);
-      i.data("data", item);
-      $("img", i).attr("src", `https://${retData.data.day.accountName}.blob.core.windows.net/${retData.data.day.containerName}/${item.name}`);
+    const isEditable = receivedData.day.status == 0 || receivedData.day.status == 1;
+    if (!isEditable) displayAll = true;
 
-      const isEditable = retData.data.day.status == 0 || retData.data.day.status == 1;
+    $.each(receivedData.pictures, function(index, item) {
+      if (displayAll || item.status == 0) {
+        var i = createFromTemplate(cntPics);
+        i.data("data", item);
+        $("img", i).attr("src", `https://${receivedData.day.accountName}.blob.core.windows.net/${receivedData.day.containerName}/${item.name}`);
 
-      if (!isEditable || item.status != 0)
-        $("button[name=done]", i).hide();
-      else
-        $("button[name=done]", i).on("click", onDoneClick);
+        if (!isEditable || item.status != 0)
+          $("button[name=done]", i).hide();
+        else
+          $("button[name=done]", i).on("click", onDoneClick);        
+      }
     });	
-    
-    setVisible($("label[name=upload]", cnt), );
-    app.showPage("pictures")
   }
 
   function fileChange(ev) 
@@ -305,7 +341,10 @@ var pictures = (() => {
     })})
     .then(res => {
         if (res.ok) 
-            item.remove();
+        {
+          //TODO: aggiornare i dati locali, aggiornare l'item di conseguenza (dipende dalla visualizzazione corrente)
+            item.hide();
+        }
         else 
             alert(res.text());
         })
@@ -328,8 +367,10 @@ $(function() {
 </script>
 
 <div page="main" style="margin: 2px; display: none; ">
-  <a name="all-dates" href="javascript: void(0);" style="display: none; ">[Tutte le date]</a>
-  <a name="pending-dates" href="javascript: void(0);" style="display: none; ">[Date aperte]</a>
+  <div style="padding: 10px; ">
+    <span style="font-size: 14pt; font-weight: bold; ">Date visualizzate&nbsp;&nbsp;</span>
+    <input type="checkbox" id="opt-all" name="view">
+  </div>
   <div name="data-cnt" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
     <div class="template data" style="flex-grow: 1.5; ">
       <span name="data" style="font-weight: bold; "></span>
@@ -341,9 +382,12 @@ $(function() {
         <label for="file2" class="button" name="bt1">Aggiungi una foto</label>
       </div>
       <div><label class="button" name="bt2">Visualizza le immagini</label><br/></div>
+      {{#if isAdmin}}
       <div><label class="button" name="bt5">Giorno completato</label><br/></div>
       <div><label class="button" name="bt3">Giorno non lavorativo</label><br/></div>
-      <div><label class="button" name="bt4">Nessuna immagine per questo giorno</label><br/></div>
+      <div><label class="button" name="bt4">Nessuna immagine per questo giorno</label><br/>
+       {{/if}}  
+       </div>
     </div>
   </div>
 </div>
@@ -354,12 +398,19 @@ $(function() {
   <span>&nbsp;&nbsp;<input type="file" name="file" id="file1" class="hiddeninputfile" accept="image/*"/>
   <label for="file1" class="link" name="upload">[Aggiungi una foto]</label></span>
   <hr/>
+  <div name="opt-view" style="padding: 10px; ">
+    <span style="font-size: 14pt; font-weight: bold; ">Immagini visualizzate&nbsp;&nbsp;</span>
+    <input type="checkbox" id="opt-all" name="view">
+  </div>
   <div name="pictures-cnt" style="text-align: center; ">
     <div class="template item">
       <img style="width:250px;">
       <br/>
+      {{#if isAdmin}}
       <button name="done" style="font-weight: bold; font-size: 12pt; width:250px; padding: 5px; border-radius: 7px; background-color: #FFFFFF; ">Gestita</button>
-      <br/><br/>
+      <br/>
+      {{/if}}
+      <br/>  
     </div>
   </div>
 </div>

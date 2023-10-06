@@ -5,7 +5,7 @@ var router = express.Router();
 /* GET home page. */
 router.get('/', function(req, res, next) {
       if (req.session.user)
-            res.render('index');
+            res.render('index', {isAdmin: req.session.user == "admin", isUser: req.session.user == "user"});
       else 
             res.render('login');
 });
