@@ -98,10 +98,11 @@ var main = (() => {
 
       setVisible($("label[name=bt1]", i).closest("div"), item.status == 0 || item.status == 1);
       setVisible($("label[name=bt2]", i).closest("div"), item.status == 1 || item.status == 2);
+{{#if isAdmin}}
       setVisible($("label[name=bt5]", i).closest("div"), item.status == 1 && item.openPictures == item.totalPictures);
       setVisible($("label[name=bt3]", i).closest("div"), item.status == 0);
       setVisible($("label[name=bt4]", i).closest("div"), item.status == 0);
-
+{{/if}}
       $("input[name=file]", i).on("change", fileChange)
       $("label", i).on("click", onButtonClick);
       $(i).on("click", onDateClick);
@@ -117,7 +118,7 @@ var main = (() => {
     const div = $(this).closest("div.data");
     const item = div.data("data");
 
-    selectedDate = item.date;
+    selectedDate = item;
 
     $(this).toggleClass("open");
 
@@ -127,14 +128,15 @@ var main = (() => {
       //showShoot(item.date);
     }
     else if (name == "bt2"){
-      pictures.show(item.date);
+      pictures.show(selectedDate);
     }
+{{#if isAdmin}}
     else if (name == "bt3"){
       if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
       {
         fetch("/data/add_not_working_day", {
           method:'POST',
-          body:new URLSearchParams({ 'date': selectedDate })
+          body:new URLSearchParams({ 'date': selectedDate.date })
           })
         .then(res => {
             if (res.ok) 
@@ -150,7 +152,7 @@ var main = (() => {
       {
         fetch("/data/add_empty_day", {
           method:'POST',
-          body:new URLSearchParams({ 'date': selectedDate })
+          body:new URLSearchParams({ 'date': selectedDate.date })
           })
         .then(res => {
             if (res.ok) 
@@ -166,7 +168,7 @@ var main = (() => {
       {
         fetch("/data/set_day_done", {
           method:'POST',
-          body:new URLSearchParams({ 'date': selectedDate })
+          body:new URLSearchParams({ 'date': selectedDate.date })
           })
         .then(res => {
             if (res.ok) 
@@ -177,6 +179,7 @@ var main = (() => {
         .catch(err => alert(err.message))
       }
     }
+{{/if}}
     else {
       alert(app.formatDate(item.date) + "\n" + $(this).text());
     }
@@ -198,7 +201,7 @@ var main = (() => {
     $.LoadingOverlay("show");
 
     const form = new FormData();
-    form.append("date", selectedDate);
+    form.append("date", selectedDate.date);
     form.append("file", ev.target.files[0])
     fetch("data/add_picture", {
       method:'POST',
@@ -229,10 +232,12 @@ var pictures = (() => {
   var currentDate;
   var displayAll = false;
   var page;
+  var picsContainer;
   var receivedData;
 
   function init() {
     page = $("div[page=pictures]");
+    picsContainer = $("div[name=pictures-cnt]", page);
 
     $("a[name=home]", page).on("click", () => main.show(true))
     $("#file1").on("change", fileChange);
@@ -253,7 +258,7 @@ var pictures = (() => {
 
   function show(dt) {
     currentDate = dt;
-    $("span[name=date]", page).text(app.formatDate(currentDate));
+    $("span[name=date]", page).text(app.formatDate(currentDate.date));
     $("label[name=upload]", page).hide();
     $("div[name=opt-view]", page).hide();
 
@@ -262,16 +267,12 @@ var pictures = (() => {
 
   function loadData() 
   {	
-    //TODO: sistemare questa opzione in base ad un toggle come sulla main
-    // può convenire caricare tutte le immagini e poi visualizzarle in base allo status dell'immagine, lo status del giorno e la selezione dell'utente
-    ajaxCall2("/data/pictures_list", {date: currentDate}, loadDataCB);
+    ajaxCall2("/data/pictures_list", {date: currentDate.date}, loadDataCB);
   }
 
   function loadDataCB(sentData, retData) 
   {	
     receivedData = retData.data;
-
-    displayPictures();
 
     const isEditable = retData.data.day.status == 0 || retData.data.day.status == 1;
     if (!isEditable) displayAll = true;
@@ -279,28 +280,50 @@ var pictures = (() => {
     setVisible($("label[name=upload]", page), isEditable);
     setVisible($("div[name=opt-view]", page), isEditable);
 
+    displayPictures();
+
     app.showPage("pictures")
   }
 
   function displayPictures() 
   {
-    var cntPics = $("div[name=pictures-cnt]", page);
-    clearContent(cntPics);
+    clearContent(picsContainer);
     
-    const isEditable = receivedData.day.status == 0 || receivedData.day.status == 1;
-
     $.each(receivedData.pictures, function(index, item) {
-      if (displayAll || item.status == 0) {
-        var i = createFromTemplate(cntPics);
-        i.data("data", item);
-        $("img", i).attr("src", `https://${receivedData.day.accountName}.blob.core.windows.net/${receivedData.day.containerName}/${item.name}`);
-
-        if (!isEditable || item.status != 0)
-          $("button[name=done]", i).hide();
-        else
-          $("button[name=done]", i).on("click", onDoneClick);        
-      }
+      appendItem(item);
     });	
+  }
+
+  function appendItem(data)
+  {
+      var i = createFromTemplate(picsContainer);
+      i.data("data", data);
+      displayItem(i);
+      {{#if isAdmin}}
+      $("button[name=done]", i).on("click", onDoneClick);    
+      {{/if}}      
+  }
+
+  function displayItem(item)
+  {
+    var data = item.data("data");
+
+    itemIsVisible = displayAll || data.status == 0;
+    setVisible(item, itemIsVisible);
+
+    if (itemIsVisible && $("img", item).attr("src") == undefined)
+    {
+        $("img", item).attr("src", `https://${receivedData.day.accountName}.blob.core.windows.net/${receivedData.day.containerName}/${data.name}`);
+    }
+
+    if (itemIsVisible){
+{{#if isAdmin}}
+      setVisible($("button[name=done]", item), data.status == 0);
+{{/if}}  
+{{#if isUser}}
+      $("span[name=status]", item).text(data.status == 0 ? "non gestita" : "gestita");
+{{/if}}  
+    }
   }
 
   function fileChange(ev) 
@@ -308,7 +331,7 @@ var pictures = (() => {
     $.LoadingOverlay("show");
 
     const form = new FormData();
-    form.append("date", currentDate);
+    form.append("date", currentDate.date);
     form.append("file", ev.target.files[0])
     fetch("data/add_picture", {
       method:'POST',
@@ -317,17 +340,20 @@ var pictures = (() => {
     .then(res => {
        $.LoadingOverlay("hide");
         ev.target.value = "";
-        if (res.ok) 
-            loadData();
-        else 
-            alert(res.text());
+        if (!res.ok) 
+          return Promise.reject(res.text());
         })
+    .then((response) => response.json())
+    .then((data) => {
+      appendItem(data.picture);
+    })
     .catch(err => {
       $.LoadingOverlay("hide");
       alert(err);
     })
   }
 
+{{#if isAdmin}}
   function onDoneClick() {
     var item = $(this.closest(".item"));
     var data = item.data("data");
@@ -335,20 +361,21 @@ var pictures = (() => {
     fetch("/data/set_picture_done", {
       method:'POST',
       body:new URLSearchParams({
-        'date': currentDate,
+        'date': currentDate.date,
         'name': data.name
     })})
     .then(res => {
         if (res.ok) 
         {
-          //TODO: aggiornare i dati locali, aggiornare l'item di conseguenza (dipende dalla visualizzazione corrente)
-            item.hide();
+          data.status = 1;
+          displayItem(item);
         }
         else 
-            alert(res.text());
+          alert(res.text());
         })
     .catch(err => alert(err.message))
   }
+{{/if}}  
 
   return {
     init: init,
@@ -407,8 +434,11 @@ $(function() {
       <br/>
       {{#if isAdmin}}
       <button name="done" style="font-weight: bold; font-size: 12pt; width:250px; padding: 5px; border-radius: 7px; background-color: #FFFFFF; ">Gestita</button>
-      <br/>
       {{/if}}
+      {{#if isUser}}
+      <span name="status" style="font-weight: bold; font-size: 12pt; "></span>
+      {{/if}}
+      <br/>
       <br/>  
     </div>
   </div>

@@ -132,7 +132,8 @@ router.post('/add_empty_day', function(req, res, next) {
         if (d1.length > 0) {
             day = d1[0];
             if (day.status != 1){
-                res.json({success: false, message: "wrong status for date [" + day.status + "]"});
+                res.status(500);
+                res.send("wrong status for date [" + day.status + "]");
                 return;
             }
 
@@ -158,26 +159,32 @@ router.post('/add_empty_day', function(req, res, next) {
         blobService.uploadStream(stream, streamLength)
         .then(
             ()=>{
-                day.pictures.push({name: name, status: 0});
+                const picture = {name: name, status: 0};
+                day.pictures.push(picture);
 
                 day.save()
                 .then(() => { 
                     console.log(`Saved day ${date}`)
-                    res.json({success: true}); })
+                    //res.json({success: true, picture}); 
+                    res.json({success: false, message: "test"});
+                })
                   .catch((err) => {
                       console.log(err);
-                      res.json({success: false, message: err.message});
+                      res.status(500);
+                      res.send(err.message);
                   });      
                     })
             .catch((err) => {
                 console.log(err);
-                res.json({success: false, message: err.message});
-            });      
+                res.status(500);
+                res.send(err.message);
+      });      
     })
     .catch((err) => {
         console.log(err);
-        res.json({success: false, message: err.message});
-    });
+        res.status(500);
+        res.send(err.message);
+});
 });
   
 router.post('/set_day_done', function(req, res, next) {
