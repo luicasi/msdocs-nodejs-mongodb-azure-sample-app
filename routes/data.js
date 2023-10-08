@@ -90,7 +90,7 @@ router.post('/add_not_working_day', function(req, res, next) {
   day.save()
       .then(() => { 
         console.log(`Added new day ${date}`)
-        res.json({success: true}); })
+        res.json({success: false, message: "test"}); })
       .catch((err) => {
           console.log(err);
           res.json({success: false, message: err.message});

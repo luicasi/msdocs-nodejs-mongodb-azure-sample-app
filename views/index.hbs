@@ -33,7 +33,7 @@ var main = (() => {
     page = $("div[page=main]");
 
     $('input[name="view"]', page).checkboxpicker({
-      offLabel:'aperte',
+      offLabel:'da gestire',
       onLabel:'tutte',
       offTitle:false,
       onTitle:false,
@@ -112,7 +112,7 @@ var main = (() => {
   }
 
 
-  function onButtonClick(event) {
+  async function onButtonClick(event) {
     event.stopPropagation();
 
     const div = $(this).closest("div.data");
@@ -134,17 +134,34 @@ var main = (() => {
     else if (name == "bt3"){
       if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
       {
-        fetch("/data/add_not_working_day", {
-          method:'POST',
-          body:new URLSearchParams({ 'date': selectedDate.date })
-          })
-        .then(res => {
-            if (res.ok) 
-                div.remove();
-            else 
-                alert(res.text());
-            })
-        .catch(err => alert(err.message))
+        try
+        {
+          const res = await fetch("/data/add_not_working_day", {
+            method:'POST',
+            body:new URLSearchParams({ 'date': selectedDate.date })
+          });
+          if (!res.ok)
+          {
+            const text = await res.text();
+            alert(text);
+            return;
+          }
+          
+          const data = await res.json();
+          if (!data.success)
+          {
+            alert(data.message);
+          }
+          else 
+          {
+            div.remove();
+          }
+          return;           
+        }
+        catch (error)
+        {
+          alert(error.message);
+        }
       }
     }
     else if (name == "bt4"){
