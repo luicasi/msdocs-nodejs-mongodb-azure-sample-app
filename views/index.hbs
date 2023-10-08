@@ -74,43 +74,54 @@ var main = (() => {
     clearContent(cnt);
     
     $.each(retData.data, function(index, item) {
-      var i = createFromTemplate(cnt);
-      i.data("data", item);
-      $("span[name=data]", i).text(app.formatDate(item.date));
-      if (item.status == 0){
-        $("span[name=testo]", i).text("Nessuna immagine caricata");
-      }
-      else if (item.status == 1){
-        $("span[name=testo]", i).text(`${item.openPictures} immagini da lavorare su ${item.totalPictures}`);
-      }
-      else if (item.status == 2){
-        $("span[name=testo]", i).text(`Completato, ${item.totalPictures} immagini`);
-      }
-      else if (item.status == 3){
-        $("span[name=testo]", i).text("Giorno non lavorativo");
-      }
-      else if (item.status == 4){
-        $("span[name=testo]", i).text("Nessuna immagine");
-      }
+      const div = createFromTemplate(cnt);
+      div.data("data", item);
+      $("span[name=data]", div).text(app.formatDate(item.date));
 
-      $("label[name=bt1]", i).attr("for", "file" + index);
-      $("input[name=file]", i).attr("id", "file" + index);
+      // questi sono necessari per attivare la selezione dell'immagine cliccando sulla label
+      $("label[name=bt1]", div).attr("for", "file" + index);
+      $("input[name=file]", div).attr("id", "file" + index);
 
-      setVisible($("label[name=bt1]", i).closest("div"), item.status == 0 || item.status == 1);
-      setVisible($("label[name=bt2]", i).closest("div"), item.status == 1 || item.status == 2);
-{{#if isAdmin}}
-      setVisible($("label[name=bt5]", i).closest("div"), item.status == 1 && item.openPictures == item.totalPictures);
-      setVisible($("label[name=bt3]", i).closest("div"), item.status == 0);
-      setVisible($("label[name=bt4]", i).closest("div"), item.status == 0);
-{{/if}}
-      $("input[name=file]", i).on("change", fileChange)
-      $("label", i).on("click", onButtonClick);
-      $(i).on("click", onDateClick);
+      $("input[name=file]", div).on("change", fileChange)
+      $("label", div).on("click", onButtonClick);
+      $(div).on("click", onDateClick);
+
+      displayDate(div);
     });	
     
     app.showPage("main")
   }
 
+  function displayDate(div)
+  {
+    const item = div.data("data");
+
+    setVisible(div, displayAll || item.status == 0 || item.status == 1);
+
+    if (item.status == 0){
+      $("span[name=testo]", div).text("Nessuna immagine caricata");
+    }
+    else if (item.status == 1){
+      $("span[name=testo]", div).text(`${item.openPictures} immagini da lavorare su ${item.totalPictures}`);
+    }
+    else if (item.status == 2){
+      $("span[name=testo]", div).text(`Completato, ${item.totalPictures} immagini`);
+    }
+    else if (item.status == 3){
+      $("span[name=testo]", div).text("Giorno non lavorativo");
+    }
+    else if (item.status == 4){
+      $("span[name=testo]", div).text("Nessuna immagine");
+    }
+
+    setVisible($("label[name=bt1]", div).closest("div"), item.status == 0 || item.status == 1);
+    setVisible($("label[name=bt2]", div).closest("div"), item.status == 1 || item.status == 2);
+{{#if isAdmin}}
+    setVisible($("label[name=bt5]", div).closest("div"), item.status == 1 && item.openPictures == item.totalPictures);
+    setVisible($("label[name=bt3]", div).closest("div"), item.status == 0);
+    setVisible($("label[name=bt4]", div).closest("div"), item.status == 0);
+{{/if}}
+  }
 
   async function onButtonClick(event) {
     event.stopPropagation();
@@ -125,82 +136,69 @@ var main = (() => {
     const name = $(this).attr("name");
 
     if (name == "bt1"){
-      //showShoot(item.date);
+      //
     }
     else if (name == "bt2"){
       pictures.show(selectedDate);
     }
 {{#if isAdmin}}
-    else if (name == "bt3"){
-      if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
-      {
-        try
-        {
-          const res = await fetch("/data/add_not_working_day", {
-            method:'POST',
-            body:new URLSearchParams({ 'date': selectedDate.date })
-          });
-          if (!res.ok)
-          {
-            const text = await res.text();
-            alert(text);
-            return;
-          }
-          
-          const data = await res.json();
-          if (!data.success)
-          {
-            alert(data.message);
-          }
-          else 
-          {
-            div.remove();
-          }
-          return;           
-        }
-        catch (error)
-        {
-          alert(error.message);
-        }
-      }
-    }
-    else if (name == "bt4"){
-      if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
-      {
-        fetch("/data/add_empty_day", {
-          method:'POST',
-          body:new URLSearchParams({ 'date': selectedDate.date })
-          })
-        .then(res => {
-            if (res.ok) 
-                div.remove();
-            else 
-                alert(res.text());
-            })
-        .catch(err => alert(err.message))
-      }
-    }
-    else if (name == "bt5"){
-      if (confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
-      {
-        fetch("/data/set_day_done", {
-          method:'POST',
-          body:new URLSearchParams({ 'date': selectedDate.date })
-          })
-        .then(res => {
-            if (res.ok) 
-                div.remove();
-            else 
-                alert(res.text());
-            })
-        .catch(err => alert(err.message))
-      }
+    else if (name == "bt3" || name == "bt4" || name == "bt5"){
+      updateDayStatus(name, div);
     }
 {{/if}}
     else {
       alert(app.formatDate(item.date) + "\n" + $(this).text());
     }
   }
+
+{{#if isAdmin}}
+  async function updateDayStatus(cmd, div) {
+
+    if (!confirm("Questa data non sarà più modificabile dopo l'operazione\nConfermi?"))
+      return;
+
+    var url;
+    switch(cmd){
+      case "bt3": url = "/data/add_not_working_day"; break;
+      case "bt4": url = "/data/add_empty_day"; break;
+      case "bt5": url = "/data/set_day_done"; break;
+      default: throw new Error("invalid command"); break;
+    }
+
+    try
+    {
+      const item = div.data("data");
+
+      const res = await fetch(url, {
+        method:'POST',
+        body:new URLSearchParams({ 'date': item.date })
+      });
+      if (!res.ok)
+      {
+        const text = await res.text();
+        alert(text);
+        return;
+      }
+      
+      const data = await res.json();
+      if (!data.success)
+      {
+        alert(data.message);
+        return;
+      }
+
+      div.data("data", data.data);
+      displayDate(div);
+
+      return;           
+    }
+    catch (error)
+    {
+      alert(error.message);
+    }
+
+  }
+{{/if}}
 
   function onDateClick() {
     if ($(this).is(".open"))
@@ -293,6 +291,9 @@ var pictures = (() => {
 
     const isEditable = retData.data.day.status == 0 || retData.data.day.status == 1;
     if (!isEditable) displayAll = true;
+
+    //todo: pare che questo non abbia effetto, resta selezionato quello che lo era in precedenza
+    $('input[name="view"]', page).prop('checked', displayAll);
 
     setVisible($("label[name=upload]", page), isEditable);
     setVisible($("div[name=opt-view]", page), isEditable);

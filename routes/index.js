@@ -48,4 +48,19 @@ router.post('/login', express.urlencoded({ extended: false }), function (req, re
       })
     })
   
+router.get("/logout", function (req, res) {
+  if (req.session) {
+    req.session.destroy(err => {
+      if (err) {
+        res.status(400).send('Unable to log out')
+      } else {
+        res.redirect('/')
+      }
+    });
+  } else {
+    res.end()
+  }
+
+});
+
 module.exports = router;

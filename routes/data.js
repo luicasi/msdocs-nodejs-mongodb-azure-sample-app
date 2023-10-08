@@ -90,7 +90,7 @@ router.post('/add_not_working_day', function(req, res, next) {
   day.save()
       .then(() => { 
         console.log(`Added new day ${date}`)
-        res.json({success: false, message: "test"}); })
+        res.json({success: true, data: {date: day.date, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length}}); })
       .catch((err) => {
           console.log(err);
           res.json({success: false, message: err.message});
@@ -113,8 +113,8 @@ router.post('/add_empty_day', function(req, res, next) {
     day.save()
         .then(() => { 
           console.log(`Added new day ${date}`)
-          res.json({success: true}); })
-        .catch((err) => {
+          res.json({success: true, data: {date: day.date, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length}}); })
+          .catch((err) => {
             console.log(err);
             res.json({success: false, message: err.message});
         });
@@ -210,11 +210,12 @@ router.post('/set_day_done', function(req, res, next) {
         day.save()
         .then(() => { 
             console.log(`Saved day ${date}`)
-            res.json({success: true}); })
-          .catch((err) => {
-              console.log(err);
-              res.json({success: false, message: err.message});
-          });      
+            res.json({success: true, data: {date: day.date, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length}}); 
+        })
+        .catch((err) => {
+            console.log(err);
+            res.json({success: false, message: err.message});
+        });      
     })
     .catch((err) => {
         console.log(err);
