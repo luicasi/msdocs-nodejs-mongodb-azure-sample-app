@@ -60,15 +60,27 @@ var main = (() => {
     }
   }
 
-  function loadData() 
+  async function loadData() 
   {	
     $.LoadingOverlay("show");
-    ajaxCall2("/data/dates_list", {opt: displayAll ? 1 : 0}, loadDataCB);
-  }
 
-  function loadDataCB(sentData, retData) 
-  {	
+    const res = await fetch("/data/dates_list?" + new URLSearchParams({opt: displayAll ? 1 : 0}));
+
     $.LoadingOverlay("hide");
+
+    if (!res.ok)
+    {
+      const text = await res.text();
+      alert(text);
+      return;
+    }
+    
+    const retData = await res.json();
+    if (!retData.success)
+    {
+      alert(retData.message);
+      return;
+    }
 
     var cnt = $("div[name=data-cnt]");
     clearContent(cnt);
@@ -117,7 +129,7 @@ var main = (() => {
     setVisible($("label[name=bt1]", div).closest("div"), item.status == 0 || item.status == 1);
     setVisible($("label[name=bt2]", div).closest("div"), item.status == 1 || item.status == 2);
 {{#if isAdmin}}
-    setVisible($("label[name=bt5]", div).closest("div"), item.status == 1 && item.openPictures == item.totalPictures);
+    setVisible($("label[name=bt5]", div).closest("div"), item.status == 1 && item.openPictures == 0);
     setVisible($("label[name=bt3]", div).closest("div"), item.status == 0);
     setVisible($("label[name=bt4]", div).closest("div"), item.status == 0);
 {{/if}}
@@ -171,7 +183,7 @@ var main = (() => {
 
       const res = await fetch(url, {
         method:'POST',
-        body:new URLSearchParams({ 'date': item.date })
+        body: new URLSearchParams({ 'date': item.date })
       });
       if (!res.ok)
       {
@@ -196,7 +208,6 @@ var main = (() => {
     {
       alert(error.message);
     }
-
   }
 {{/if}}
 
@@ -211,29 +222,34 @@ var main = (() => {
     }
   }
 
-  function fileChange(ev) 
+  async function fileChange(ev) 
   {
     $.LoadingOverlay("show");
 
     const form = new FormData();
     form.append("date", selectedDate.date);
     form.append("file", ev.target.files[0])
-    fetch("data/add_picture", {
-      method:'POST',
-      body:form,
-    }, )
-    .then(res => {
-       $.LoadingOverlay("hide");
-        ev.target.value = "";
-        if (res.ok) 
-            pictures.show(selectedDate);
-        else 
-            alert(res.text());
-        })
-    .catch(err => {
+
+    try {
+      const res = await fetch("data/add_picture", {
+        method:'POST',
+        body:form,
+      });
+
+      $.LoadingOverlay("hide");
+      ev.target.value = "";
+
+      if (res.ok) 
+          pictures.show(selectedDate);
+      else {
+        const content = await res.text();
+        alert(content);
+      }      
+    }
+    catch (err) {
       $.LoadingOverlay("hide");
       alert(err);
-    })
+    }
   }
 
   return {
@@ -280,13 +296,24 @@ var pictures = (() => {
     loadData();
   }
 
-  function loadData() 
+  async function loadData() 
   {	
-    ajaxCall2("/data/pictures_list", {date: currentDate.date}, loadDataCB);
-  }
+    const res = await fetch("/data/pictures_list?" + new URLSearchParams({date: currentDate.date}));
+	
+    if (!res.ok)
+    {
+      const text = await res.text();
+      alert(text);
+      return;
+    }
+    
+    const retData = await res.json();
+    if (!retData.success)
+    {
+      alert(retData.message);
+      return;
+    }
 
-  function loadDataCB(sentData, retData) 
-  {	
     receivedData = retData.data;
 
     const isEditable = retData.data.day.status == 0 || retData.data.day.status == 1;
@@ -314,7 +341,7 @@ var pictures = (() => {
 
   function appendItem(data)
   {
-      var i = createFromTemplate(picsContainer);
+      var i = createFromTemplate(picsContainer, true);
       i.data("data", data);
       displayItem(i);
       {{#if isAdmin}}
@@ -344,56 +371,127 @@ var pictures = (() => {
     }
   }
 
-  function fileChange(ev) 
+  async function fileChange(ev) 
   {
     $.LoadingOverlay("show");
 
     const form = new FormData();
     form.append("date", currentDate.date);
     form.append("file", ev.target.files[0])
-    fetch("data/add_picture", {
-      method:'POST',
-      body:form,
-    }, )
-    .then(res => {
-       $.LoadingOverlay("hide");
-        ev.target.value = "";
-        if (!res.ok) 
-          return Promise.reject(res.text());
-        })
-    .then((response) => response.json())
-    .then((data) => {
-      appendItem(data.picture);
-    })
-    .catch(err => {
+
+    try {
+      const res = await fetch("data/add_picture", {
+        method:'POST',
+        body:form,
+      });
+
+      $.LoadingOverlay("hide");
+      ev.target.value = "";
+
+      if (res.ok) 
+        appendItem(data.picture);
+      else {
+        const content = await res.text();
+        alert(content);
+      }      
+    }
+    catch (err) {
       $.LoadingOverlay("hide");
       alert(err);
-    })
+    }
   }
 
 {{#if isAdmin}}
-  function onDoneClick() {
+  async function onDoneClick() {
     var item = $(this.closest(".item"));
     var data = item.data("data");
 
-    fetch("/data/set_picture_done", {
-      method:'POST',
-      body:new URLSearchParams({
-        'date': currentDate.date,
-        'name': data.name
-    })})
-    .then(res => {
-        if (res.ok) 
+    try {
+      const res = await fetch("/data/set_picture_done", {
+        method:'POST',
+        body:new URLSearchParams({
+          'date': currentDate.date,
+          'name': data.name
+      })});
+
+      if (!res.ok) {
+        const content = await res.text();
+        alert(content);
+        return;
+      }
+
+      const content = await res.json();
+      if (!content.success)
+      {
+        alert(content.message);
+        return;
+      }
+    
+      data.status = 1;
+      displayItem(item);     
+
+      //TODO: se non ci sono più immagini da gestire proporre all'utente di chiudere la giornata
+      if (!anyOpenPicture()){
+        if (confirm("Non ci sono più immagini da gestire. \nSi vuole chiudere la giornata?"))
         {
-          data.status = 1;
-          displayItem(item);
+          const done = await setDayDone(item.date);
+          if (done)
+            main.show();
         }
-        else 
-          alert(res.text());
-        })
-    .catch(err => alert(err.message))
+      }
+    }      
+    catch (err){
+       alert(err.message)
+    }
+  }
+
+  async function setDayDone(date) {
+
+    try
+    {
+      const item = div.data("data");
+
+      const res = await fetch("/data/set_day_done", {
+        method:'POST',
+        body: new URLSearchParams({ 'date': date })
+      });
+      if (!res.ok)
+      {
+        const text = await res.text();
+        alert(text);
+        return false;
+      }
+      
+      const data = await res.json();
+      if (!data.success)
+      {
+        alert(data.message);
+        return false;
+      }
+
+      return true;           
+    }
+    catch (error)
+    {
+      alert(error.message);
+      return false;
+    }
   }
 {{/if}}  
+
+  function anyOpenPicture() 
+  {
+    var found = false;
+    $("div.item", picsContainer).each((index, item) => {
+      var data = $(item).data("data");
+      if (data.status == 1)
+      {
+        found = true;
+        return false;
+      }
+    });
+    return found;
+  }
 
   return {
     init: init,

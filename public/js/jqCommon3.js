@@ -102,12 +102,16 @@ function setObjectID(o) {
 }
 
 // all'interno del contenitore specificato clona l'elemento con classe 'template' e lo accoda al contenitore togliendo la classe stessa
-function createFromTemplate(cnt) {
+function createFromTemplate(cnt, prepend) {
 
 	var tClass = "template";
 	var l = $(cnt).children("." + tClass).clone();
 	l.removeClass(tClass);
-	$(cnt).append(l);	l.show();	
+	if (prepend)
+		$(cnt).prepend(l);	
+	else
+		$(cnt).append(l);	
+	l.show();	
 	return l;
 	
 }
@@ -154,7 +158,7 @@ function addOptionToSelect(s, optionValue, optionText) {
 
 	var found = false;
 	/*
-	questa soluzione non va bene perchè non funziona con tutti i valori (ad esempio se c'è un punto)
+	questa soluzione non va bene perchï¿½ non funziona con tutti i valori (ad esempio se c'ï¿½ un punto)
 	var check = $("option[value=" + optionValue + "]", s);
 	if (check.length > 0)
 		return;
@@ -235,7 +239,7 @@ function getArrayFromObject(arrList, sortByValue)
   
   ret = $(ret).sort(fnSort);
 
-  //slm perchè dopo che faccio l'ordinamento mi diventa un oggetto...
+  //slm perchï¿½ dopo che faccio l'ordinamento mi diventa un oggetto...
   //lo ritrasformo in un array
   for (var j = 0; j < ret.length; j++)
   {
@@ -343,7 +347,7 @@ function getSelectedValues(o) {
 	});
  }
  
- // se l'option correntemente selezionata non è visible imposta la prima visible
+ // se l'option correntemente selezionata non ï¿½ visible imposta la prima visible
  // e ritorna true 
  // altrimenti ritorna false
  function selectVisibleOption(select) {
