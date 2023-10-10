@@ -271,7 +271,7 @@ var pictures = (() => {
     picsContainer = $("div[name=pictures-cnt]", page);
 
     $("a[name=home]", page).on("click", () => main.show(true))
-    $("#file1").on("change", fileChange);
+    $("#upload_file").on("change", fileChange);
 
     $('input[name="view"]', page).checkboxpicker({
       offLabel:'da gestire',
@@ -537,8 +537,8 @@ $(function() {
 <div page="pictures" style="margin: 10px; display: none; ">
   <span name="date" style="font-weight: bold; font-size: 12pt; "></span>
   <span>&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a></span>
-  <span>&nbsp;&nbsp;<input type="file" name="file" id="file1" class="hiddeninputfile" accept="image/*"/>
-  <label for="file1" class="link" name="upload">[Aggiungi una foto]</label></span>
+  <span>&nbsp;&nbsp;<input type="file" name="file" id="upload_file" class="hiddeninputfile" accept="image/*"/>
+  <label for="upload_file" class="link" name="upload">[Aggiungi una foto]</label></span>
   <hr/>
   <div name="opt-view" style="padding: 10px; ">
     <span style="font-size: 14pt; font-weight: bold; ">Immagini visualizzate&nbsp;&nbsp;</span>
