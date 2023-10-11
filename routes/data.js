@@ -17,6 +17,14 @@ const
 
 var Day = require('../models/day');
 
+function getBasicData(day) {
+    return {date: day.date, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length};
+}
+
+function failure(message) {
+    return {success: false, message: message}
+}
+
 router.get('/dates_list', async function(req, res, next) {
     const opt = req.query.opt;
 
@@ -33,7 +41,7 @@ router.get('/dates_list', async function(req, res, next) {
                 const day = await Day.findOne({ 'date': dt });
                 if (day){
                     if (day.status == 1 || opt == "1"){
-                        data.push({date: dt, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length});
+                        data.push(getBasicData(day));
                     }
                 }
                 else {
@@ -45,15 +53,16 @@ router.get('/dates_list', async function(req, res, next) {
         res.json({success: true, data: data});
         return;
     }
-
-  Day.find()
-    .then((days) => {      
-      res.json({success: true, data: days});
-    })
-    .catch((err) => {
-      console.log(err);
-      res.json({success: false, message: err.message});
-    });
+    else if (opt == "2"){
+        try {
+            const days = await Day.find();
+            res.json({success: true, data: days});
+        }
+        catch (err) {
+            console.log(err);
+            res.json(failure(err.message));
+        }
+    }
 });
 
 router.get('/pictures_list', async function(req, res, next) {
@@ -66,11 +75,9 @@ router.get('/pictures_list', async function(req, res, next) {
             data.pictures.push({name: picture.name, status: picture.status});
         }
         res.json({success: true, data: data});
-        return;
     }
     else {
-        res.json({success: false, message: "date not found [" + date + "]"});
-        return;
+        res.json(failure("date not found [" + date + "]"));
     }
 });
 
@@ -90,10 +97,10 @@ router.post('/add_not_working_day', function(req, res, next) {
   day.save()
       .then(() => { 
         console.log(`Added new day ${date}`)
-        res.json({success: true, data: {date: day.date, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length}}); })
+        res.json({success: true, data: getBasicData(day)}); })
       .catch((err) => {
           console.log(err);
-          res.json({success: false, message: err.message});
+          res.json(failure(err.message));
       });
 });
 
@@ -113,10 +120,10 @@ router.post('/add_empty_day', function(req, res, next) {
     day.save()
         .then(() => { 
           console.log(`Added new day ${date}`)
-          res.json({success: true, data: {date: day.date, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length}}); })
+          res.json({success: true, data: getBasicData(day)}); })
           .catch((err) => {
             console.log(err);
-            res.json({success: false, message: err.message});
+            res.json(failure(err.message));
         });
   });
   
@@ -165,8 +172,7 @@ router.post('/add_empty_day', function(req, res, next) {
                 day.save()
                 .then(() => { 
                     console.log(`Saved day ${date}`)
-                    //res.json({success: true, picture}); 
-                    res.json({success: false, message: "test"});
+                    res.json({success: true, picture}); 
                 })
                   .catch((err) => {
                       console.log(err);
@@ -194,13 +200,13 @@ router.post('/set_day_done', function(req, res, next) {
     .then(days => {
         const d1 = days.filter(item => item.date == date);
         if (d1.length == 0) {
-            res.json({success: false, message: "date not found [" + date + "]"});
+            res.json(failure("date not found [" + date + "]"));
             return;
         }
 
         const day = d1[0];
         if (day.status != 1){
-            res.json({success: false, message: "wrong status for date [" + day.status + "]"});
+            res.json(failure("wrong status for date [" + day.status + "]"));
             return;
         }
 
@@ -210,16 +216,16 @@ router.post('/set_day_done', function(req, res, next) {
         day.save()
         .then(() => { 
             console.log(`Saved day ${date}`)
-            res.json({success: true, data: {date: day.date, status: day.status, openPictures: day.pictures.filter(i => i.status == 0).length, totalPictures: day.pictures.length}}); 
+            res.json({success: true, data: getBasicData(day)}); 
         })
         .catch((err) => {
             console.log(err);
-            res.json({success: false, message: err.message});
+            res.json(failure(err.message));
         });      
     })
     .catch((err) => {
         console.log(err);
-        res.json({success: false, message: err.message});
+        res.json(failure(err.message));
     });
 });
 
@@ -231,13 +237,13 @@ router.post('/set_picture_done', function(req, res, next) {
     .then(days => {
         const d1 = days.filter(item => item.date == date);
         if (d1.length == 0) {
-            res.json({success: false, message: "date not found [" + date + "]"});
+            res.json(failure("date not found [" + date + "]"));
             return;
         }
 
         const day = d1[0];
         if (day.status != 1){
-            res.json({success: false, message: "wrong status for date [" + day.status + "]"});
+            res.json(failure("wrong status for date [" + day.status + "]"));
             return;
         }
 
@@ -251,7 +257,7 @@ router.post('/set_picture_done', function(req, res, next) {
         }
 
         if (!pictureFound){
-            res.json({success: false, message: "picture not found [" + name + "]"});
+            res.json(failure("picture not found [" + name + "]"));
             return;
         }
 
@@ -261,12 +267,12 @@ router.post('/set_picture_done', function(req, res, next) {
             res.json({success: true}); })
           .catch((err) => {
               console.log(err);
-              res.json({success: false, message: err.message});
+              res.json(failure(err.message));
           });      
     })
     .catch((err) => {
         console.log(err);
-        res.json({success: false, message: err.message});
+        res.json(failure(err.message));
     });
 });
 
@@ -278,7 +284,7 @@ router.post('/delete_date', function(req, res, next) {
         res.json({success: true}); })
       .catch((err) => {
         console.log(err);
-        res.json({success: false, message: err.message});
+        res.json(failure(err.message));
       });
   });
   

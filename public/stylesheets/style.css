@@ -44,14 +44,30 @@ div.data button {
   background-color: #FFFFFF; 
 }
 
-div[page=shoot] button {
-  width: 90%;
+div[page=pictures] button.action {
+  width: 140px;
   height: 40px;
   text-align: center;
   vertical-align: middle;
+  font-size: 14pt;
+  font-weight: bold;
   margin: 5px; 
   border-radius: 7px;
-  background-color: #FFFFFF; 
+}
+
+div[page=pictures] label.button {
+  display: inline-block;
+  padding: 10px;
+  border: 2px solid black;
+  width: 200px;
+  height: 40px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 5px; 
+  border-radius: 7px;
+  background-color: buttonface;
 }
 
 .hiddeninputfile {

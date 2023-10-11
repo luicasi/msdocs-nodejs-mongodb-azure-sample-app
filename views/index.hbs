@@ -270,7 +270,7 @@ var pictures = (() => {
     page = $("div[page=pictures]");
     picsContainer = $("div[name=pictures-cnt]", page);
 
-    $("a[name=home]", page).on("click", () => main.show(true))
+    $("button[name=home]", page).on("click", () => main.show(true))
     $("#upload_file").on("change", fileChange);
 
     $('input[name="view"]', page).checkboxpicker({
@@ -430,7 +430,6 @@ var pictures = (() => {
       data.status = 1;
       displayItem(item);     
 
-      //TODO: se non ci sono più immagini da gestire proporre all'utente di chiudere la giornata
       if (!anyOpenPicture()){
         if (confirm("Non ci sono più immagini da gestire. \nSi vuole chiudere la giornata?"))
         {
@@ -520,8 +519,8 @@ $(function() {
       <span name="testo" style="font-style: italic; font-size: 10pt; "></span> 
       <br/>
       <div>
-        <input type="file" name="file" id="file2" class="hiddeninputfile" accept="image/*"/>
-        <label for="file2" class="button" name="bt1">Aggiungi una foto</label>
+        <input type="file" name="file" id="file_" class="hiddeninputfile" accept="image/*"/>
+        <label for="file_" class="button" name="bt1">Aggiungi una foto</label>
       </div>
       <div><label class="button" name="bt2">Visualizza le immagini</label><br/></div>
       {{#if isAdmin}}
@@ -536,9 +535,9 @@ $(function() {
 
 <div page="pictures" style="margin: 10px; display: none; ">
   <span name="date" style="font-weight: bold; font-size: 12pt; "></span>
-  <span>&nbsp;&nbsp; <a name="home" href="javascript: void(0);">[Home]</a></span>
+  <span>&nbsp;&nbsp; <button name="home" class="action">Home</button></span>
   <span>&nbsp;&nbsp;<input type="file" name="file" id="upload_file" class="hiddeninputfile" accept="image/*"/>
-  <label for="upload_file" class="link" name="upload">[Aggiungi una foto]</label></span>
+  <label for="upload_file" class="button" name="upload">Aggiungi una foto</label></span>
   <hr/>
   <div name="opt-view" style="padding: 10px; ">
     <span style="font-size: 14pt; font-weight: bold; ">Immagini visualizzate&nbsp;&nbsp;</span>
