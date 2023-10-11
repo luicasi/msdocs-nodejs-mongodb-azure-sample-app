@@ -218,7 +218,7 @@ var main = (() => {
     }
     else {
       $("div.data.open", "div[page=main]").removeClass("open");
-      $(this).toggleClass("open");
+      $(this).addClass("open");
     }
   }
 
@@ -270,7 +270,7 @@ var pictures = (() => {
     page = $("div[page=pictures]");
     picsContainer = $("div[name=pictures-cnt]", page);
 
-    $("button[name=home]", page).on("click", () => main.show(true))
+    $("img[name=home]", page).on("click", () => main.show(true))
     $("#upload_file").on("change", fileChange);
 
     $('input[name="view"]', page).checkboxpicker({
@@ -388,8 +388,10 @@ var pictures = (() => {
       $.LoadingOverlay("hide");
       ev.target.value = "";
 
-      if (res.ok) 
+      if (res.ok) {
+        const data = await res.json();
         appendItem(data.picture);
+      }
       else {
         const content = await res.text();
         alert(content);
@@ -428,15 +430,20 @@ var pictures = (() => {
       }
     
       data.status = 1;
-      displayItem(item);     
 
       if (!anyOpenPicture()){
         if (confirm("Non ci sono più immagini da gestire. \nSi vuole chiudere la giornata?"))
         {
-          const done = await setDayDone(item.date);
+          const done = await setDayDone(currentDate.date);
           if (done)
-            main.show();
+            main.show(true);
         }
+        else {
+          displayItem(item);     
+        }
+      }
+      else {
+        displayItem(item);     
       }
     }      
     catch (err){
@@ -444,12 +451,10 @@ var pictures = (() => {
     }
   }
 
-  async function setDayDone(date) {
-
+  async function setDayDone(date) 
+  {
     try
     {
-      const item = div.data("data");
-
       const res = await fetch("/data/set_day_done", {
         method:'POST',
         body: new URLSearchParams({ 'date': date })
@@ -483,7 +488,7 @@ var pictures = (() => {
     var found = false;
     $("div.item", picsContainer).each((index, item) => {
       var data = $(item).data("data");
-      if (data.status == 1)
+      if (data && data.status == 0)
       {
         found = true;
         return false;
@@ -498,7 +503,8 @@ var pictures = (() => {
   }
 })();
 
-$(function() {
+$(function() 
+{
   main.init();
   pictures.init();
 
@@ -534,10 +540,12 @@ $(function() {
 </div>
 
 <div page="pictures" style="margin: 10px; display: none; ">
-  <span name="date" style="font-weight: bold; font-size: 12pt; "></span>
-  <span>&nbsp;&nbsp; <button name="home" class="action">Home</button></span>
-  <span>&nbsp;&nbsp;<input type="file" name="file" id="upload_file" class="hiddeninputfile" accept="image/*"/>
-  <label for="upload_file" class="button" name="upload">Aggiungi una foto</label></span>
+  <div>
+  <span name="date" style="font-weight: bold; font-size: 20pt; vertical-align: middle; margin-right: 30px; "></span>
+  <span><img name="home" title="home" src="images/home.png" style="width: 40px; margin-right: 20px; "></span>
+  <span><input type="file" name="file" id="upload_file" class="hiddeninputfile" accept="image/*"/>
+  <label for="upload_file" name="upload"><img title="Aggiungi una foto" src="images/camera.png" style="width: 40px; "></label></span>
+  </div>
   <hr/>
   <div name="opt-view" style="padding: 10px; ">
     <span style="font-size: 14pt; font-weight: bold; ">Immagini visualizzate&nbsp;&nbsp;</span>

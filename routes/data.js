@@ -25,7 +25,13 @@ function failure(message) {
     return {success: false, message: message}
 }
 
-router.get('/dates_list', async function(req, res, next) {
+router.get('/dates_list', async function(req, res, next) 
+{
+    if (req.session.user == undefined){
+        res.json(failure("Non autorizzato"));
+        return;
+    }
+
     const opt = req.query.opt;
 
     var data = [];
@@ -65,7 +71,13 @@ router.get('/dates_list', async function(req, res, next) {
     }
 });
 
-router.get('/pictures_list', async function(req, res, next) {
+router.get('/pictures_list', async function(req, res, next) 
+{
+    if (req.session.user == undefined){
+        res.json(failure("Non autorizzato"));
+        return;
+    }
+
     const date = req.query.date;
 
     const day = await Day.findOne({ 'date': date });
@@ -81,202 +93,216 @@ router.get('/pictures_list', async function(req, res, next) {
     }
 });
 
-router.post('/add_not_working_day', function(req, res, next) {
-  const date = req.body.date;
-  const createdDate = Date.now();
-  
-  //todo: verificare che la data non esista
+router.post('/add_not_working_day', async function(req, res, next) 
+{
+    if (req.session.user == undefined){
+        res.json(failure("Non autorizzato"));
+        return;
+    }
 
-  var day = new Day({
-    date: date,
-    status: 3,
-    createdDate: createdDate,
-    pictures: []
+    const date = req.body.date;
+    const createdDate = Date.now();
+  
+    var day = await Day.findOne({ 'date': date });
+    if (day)
+    {
+        res.json(failure("Data già presente in archivio [" + date + "]"));
+        return;
+    }
+
+    day = new Day({
+        date: date,
+        status: 3,
+        createdDate: createdDate
     });
 
-  day.save()
-      .then(() => { 
+    try {
+        await day.save();
         console.log(`Added new day ${date}`)
-        res.json({success: true, data: getBasicData(day)}); })
-      .catch((err) => {
-          console.log(err);
-          res.json(failure(err.message));
-      });
+        res.json({success: true, data: getBasicData(day)});
+    }
+    catch (err) {
+        console.log(err);
+        res.json(failure(err.message));
+    }
 });
 
-router.post('/add_empty_day', function(req, res, next) {
+router.post('/add_empty_day', async function(req, res, next) 
+{
+    if (req.session.user == undefined){
+        res.json(failure("Non autorizzato"));
+        return;
+    }
+
     const date = req.body.date;
     const createdDate = Date.now();
     
-  //todo: verificare che la data non esista
+    var day = await Day.findOne({ 'date': date });
+    if (day)
+    {
+        res.json(failure("Data già presente in archivio [" + date + "]"));
+        return;
+    }
 
-  var day = new Day({
+    var day = new Day({
       date: date,
       status: 4,
-      createdDate: createdDate,
-      pictures: []
+      createdDate: createdDate
     });
   
-    day.save()
-        .then(() => { 
-          console.log(`Added new day ${date}`)
-          res.json({success: true, data: getBasicData(day)}); })
-          .catch((err) => {
-            console.log(err);
-            res.json(failure(err.message));
-        });
+    try {
+        await day.save();
+        console.log(`Added new day ${date}`)
+        res.json({success: true, data: getBasicData(day)});
+    }
+    catch (err) {
+        console.log(err);
+        res.json(failure(err.message));
+    }
   });
   
-  router.post('/add_picture', uploadStrategy, function(req, res, next) {
+  router.post('/add_picture', uploadStrategy, async function(req, res, next) 
+  {
+    if (req.session.user == undefined){
+        res.json(failure("Non autorizzato"));
+        return;
+    }
+
     const date = req.body.date;
     const createdDate = Date.now();
     
-    Day.find()
-    .then(days => {
-        const d1 = days.filter(item => item.date == date);
-        var day;
-        var index = 0;
-        if (d1.length > 0) {
-            day = d1[0];
-            if (day.status != 1){
-                res.status(500);
-                res.send("wrong status for date [" + day.status + "]");
-                return;
-            }
+    var day = await Day.findOne({ 'date': date });
+    if (!day)
+    {
+        day = new Day({
+            date: date,
+            status: 1,
+            createdDate: createdDate
+        });   
+    }
+    else {
+        if (day.status != 1){
+            res.status(500);
+            res.send("Stato non valido per la data [" + day.status + "]");
+            return;
+        }    
+    }
 
-            index = day.pictures.length;
-        }
-        else {
-            day = new Day({
-                date: date,
-                status: 1,
-                createdDate: createdDate
-            });                    
-        }
+    console.log(req.file);
 
-        console.log(req.file);
+    const name = date + "_" + day.pictures.length + path.extname(req.file.originalname);
+    const
+        blobService = new BlockBlobClient(process.env.AZURE_STORAGE_CONNECTION_STRING, containerName, name)
+        , stream = getStream(req.file.buffer)
+        , streamLength = req.file.buffer.length
+    ;
 
-        const name = date + "_" + index + path.extname(req.file.originalname);
-        const
-            blobService = new BlockBlobClient(process.env.AZURE_STORAGE_CONNECTION_STRING, containerName, name)
-            , stream = getStream(req.file.buffer)
-            , streamLength = req.file.buffer.length
-        ;
+    try {
+        await blobService.uploadStream(stream, streamLength);
+        const picture = {name: name, status: 0};
+        day.pictures.push(picture);
 
-        blobService.uploadStream(stream, streamLength)
-        .then(
-            ()=>{
-                const picture = {name: name, status: 0};
-                day.pictures.push(picture);
+        await day.save();
 
-                day.save()
-                .then(() => { 
-                    console.log(`Saved day ${date}`)
-                    res.json({success: true, picture}); 
-                })
-                  .catch((err) => {
-                      console.log(err);
-                      res.status(500);
-                      res.send(err.message);
-                  });      
-                    })
-            .catch((err) => {
-                console.log(err);
-                res.status(500);
-                res.send(err.message);
-      });      
-    })
-    .catch((err) => {
+        console.log(`Saved day ${date}`)
+        res.json({success: true, picture}); 
+    }
+    catch (err){
         console.log(err);
         res.status(500);
         res.send(err.message);
-});
+    }
 });
   
-router.post('/set_day_done', function(req, res, next) {
+router.post('/set_day_done', async function(req, res, next) 
+{
+    if (req.session.user == undefined){
+        res.json(failure("Non autorizzato"));
+        return;
+    }
+
     const date = req.body.date;
     
-    Day.find()
-    .then(days => {
-        const d1 = days.filter(item => item.date == date);
-        if (d1.length == 0) {
-            res.json(failure("date not found [" + date + "]"));
-            return;
-        }
+    var day = await Day.findOne({ 'date': date });
+    if (!day)
+    {
+        res.json(failure("Data non trovata in archivio [" + date + "]"));
+        return;
+    }
 
-        const day = d1[0];
-        if (day.status != 1){
-            res.json(failure("wrong status for date [" + day.status + "]"));
-            return;
-        }
+    if (day.status != 1){
+        res.json(failure("Stato non valido per la data [" + day.status + "]"));
+        return;
+    }
 
-        day.status = 2;
-        day.updatedDate = Date.now();
+    day.status = 2;
+    day.updatedDate = Date.now();
 
-        day.save()
-        .then(() => { 
-            console.log(`Saved day ${date}`)
-            res.json({success: true, data: getBasicData(day)}); 
-        })
-        .catch((err) => {
-            console.log(err);
-            res.json(failure(err.message));
-        });      
-    })
-    .catch((err) => {
+    try {
+        await day.save();
+        console.log(`Saved day ${date}`)
+        res.json({success: true, data: getBasicData(day)}); 
+    }
+    catch (err) {
         console.log(err);
         res.json(failure(err.message));
-    });
+    }
 });
 
-router.post('/set_picture_done', function(req, res, next) {
+router.post('/set_picture_done', async function(req, res, next) 
+{
+    if (req.session.user == undefined){
+        res.json(failure("Non autorizzato"));
+        return;
+    }
+
     const date = req.body.date;
     const name = req.body.name;
     
-    Day.find()
-    .then(days => {
-        const d1 = days.filter(item => item.date == date);
-        if (d1.length == 0) {
-            res.json(failure("date not found [" + date + "]"));
-            return;
-        }
+    var day = await Day.findOne({ 'date': date });
+    if (!day)
+    {
+        res.json(failure("Data non trovata in archivio [" + date + "]"));
+        return;
+    }
 
-        const day = d1[0];
-        if (day.status != 1){
-            res.json(failure("wrong status for date [" + day.status + "]"));
-            return;
-        }
+    if (day.status != 1){
+        res.json(failure("Stato non valido per la data [" + day.status + "]"));
+        return;
+    }
 
-        var pictureFound = false;
-        for (var i = 0; i < day.pictures.length; i++)
-        {
-            if (day.pictures[i].name == name){
-                day.pictures[i].status = 1;
-                pictureFound = true;
-            }
+    var pictureFound = false;
+    for (var i = 0; i < day.pictures.length; i++)
+    {
+        if (day.pictures[i].name == name){
+            day.pictures[i].status = 1;
+            pictureFound = true;
         }
+    }
 
-        if (!pictureFound){
-            res.json(failure("picture not found [" + name + "]"));
-            return;
-        }
+    if (!pictureFound){
+        res.json(failure("Immagine non trovata [" + name + "]"));
+        return;
+    }
 
-        day.save()
-        .then(() => { 
-            console.log(`Saved day ${date}`)
-            res.json({success: true}); })
-          .catch((err) => {
-              console.log(err);
-              res.json(failure(err.message));
-          });      
-    })
-    .catch((err) => {
+    try {
+        await day.save();
+        console.log(`Saved day ${date}`)
+        res.json({success: true}); 
+    }
+    catch (err){
         console.log(err);
         res.json(failure(err.message));
-    });
+    }
 });
 
-router.post('/delete_date', function(req, res, next) {
+router.post('/delete_date', function(req, res, next) 
+{
+    if (req.session.user == undefined){
+        res.json(failure("Non autorizzato"));
+        return;
+    }
+
     const dayId = req.body._id;
     Day.findByIdAndDelete(dayId)
       .then(() => { 
