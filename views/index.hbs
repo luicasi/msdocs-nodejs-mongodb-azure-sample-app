@@ -282,7 +282,7 @@ var pictures = (() => {
 
     $('input[name="view"]', page).on('change', function() {
       displayAll = $('input[name="view"]', page).prop('checked');
-      displayPictures();
+      refreshDisplay();
     });
 
   }
@@ -352,6 +352,7 @@ var pictures = (() => {
   function displayItem(item)
   {
     var data = item.data("data");
+    if (!data) return;
 
     itemIsVisible = displayAll || data.status == 0;
     setVisible(item, itemIsVisible);
@@ -369,6 +370,13 @@ var pictures = (() => {
       $("span[name=status]", item).text(data.status == 0 ? "non gestita" : "gestita");
 {{/if}}  
     }
+  }
+
+  function refreshDisplay() {
+
+    $("div.item", picsContainer).each((index, item) => {
+      displayItem($(item));
+    });
   }
 
   async function fileChange(ev) 
@@ -542,9 +550,9 @@ $(function()
 <div page="pictures" style="margin: 10px; display: none; ">
   <div>
   <span name="date" style="font-weight: bold; font-size: 20pt; vertical-align: middle; margin-right: 30px; "></span>
-  <span><img name="home" title="home" src="images/home.png" style="width: 40px; margin-right: 20px; "></span>
+  <span><img name="home" title="home" src="images/home.png" style="width: 40px; margin-right: 20px; cursor: pointer; "></span>
   <span><input type="file" name="file" id="upload_file" class="hiddeninputfile" accept="image/*"/>
-  <label for="upload_file" name="upload"><img title="Aggiungi una foto" src="images/camera.png" style="width: 40px; "></label></span>
+  <label for="upload_file" name="upload"><img title="Aggiungi una foto" src="images/camera.png" style="width: 40px; cursor: pointer; "></label></span>
   </div>
   <hr/>
   <div name="opt-view" style="padding: 10px; ">
