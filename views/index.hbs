@@ -33,8 +33,8 @@ var main = (() => {
     page = $("div[page=main]");
 
     $('input[name="view"]', page).checkboxpicker({
-      offLabel:'da gestire',
-      onLabel:'tutte',
+      offLabel:'le date da gestire',
+      onLabel:'tutte le date',
       offTitle:false,
       onTitle:false,
     });
@@ -274,8 +274,8 @@ var pictures = (() => {
     $("#upload_file").on("change", fileChange);
 
     $('input[name="view"]', page).checkboxpicker({
-      offLabel:'da gestire',
-      onLabel:'tutte',
+      offLabel:'le immagini da gestire',
+      onLabel:'tutte le immagini',
       offTitle:false,
       onTitle:false,
     });
@@ -523,7 +523,7 @@ $(function()
 
 <div page="main" style="margin: 2px; display: none; ">
   <div style="padding: 10px; ">
-    <span style="font-size: 14pt; font-weight: bold; ">Date visualizzate&nbsp;&nbsp;</span>
+    <span style="font-size: 14pt; font-weight: bold; ">Visualizza&nbsp;&nbsp;</span>
     <input type="checkbox" id="opt-all" name="view">
   </div>
   <div name="data-cnt" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
@@ -556,7 +556,7 @@ $(function()
   </div>
   <hr/>
   <div name="opt-view" style="padding: 10px; ">
-    <span style="font-size: 14pt; font-weight: bold; ">Immagini visualizzate&nbsp;&nbsp;</span>
+    <span style="font-size: 14pt; font-weight: bold; ">Visualizza&nbsp;&nbsp;</span>
     <input type="checkbox" id="opt-all" name="view">
   </div>
   <div name="pictures-cnt" style="text-align: center; ">
