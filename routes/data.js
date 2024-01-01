@@ -51,7 +51,7 @@ router.get('/dates_list', async function(req, res, next)
                     }
                 }
                 else {
-                    data.push({date: dt, status: 0, openPictures: 0, closedPictures: 0});
+                    data.push({date: dt, status: 0, openPictures: 0, totalPictures: 0});
                 }
             }
             d.setDate(d.getDate() + 1);
